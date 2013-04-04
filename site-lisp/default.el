@@ -1,7 +1,23 @@
 ;; Get path of site-lisp directory in a win32 emacs install
 (setq idm-site-lisp (expand-file-name "site-lisp" (getenv "emacs_dir")))
+;; Created by Rob Christie
+;; http://emacsblog.org/2007/01/17/indent-whole-buffer/
+(defun iwb ()
+  "indent whole buffer"
+  (interactive)
+  (delete-trailing-whitespace)
+  (indent-region (point-min) (point-max) nil)
+  (untabify (point-min) (point-max))
+  )
 ;; Enable electric-indent in js2-mode
-(add-hook 'js2-mode-hook (lambda() (electric-indent-mode)))
+(add-hook 'js2-mode-hook (lambda()
+			   (electric-indent-mode t)
+			   (electric-pair-mode t)
+			   (setq electric-pair-skip-self t)
+			   (local-set-key (kbd "RET") 'js2-line-break)
+			   (local-set-key (kbd "C-F") 'iwb)
+			   (add-to-list 'js2-additional-externs "uError")
+			   (add-to-list 'js2-additional-externs "uInfo")			   ))
 ;; Always show file name in frame title
 (setq frame-title-format "%b")
 ;; Never require yes or no style answers

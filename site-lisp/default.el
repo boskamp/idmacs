@@ -19,18 +19,20 @@
 			   ;; indent whole buffer on Ctrl+Shift+f
 			   (local-set-key (kbd "C-S-f") 'iwb)
 			   (add-to-list 'js2-additional-externs "uError")
-			   (add-to-list 'js2-additional-externs "uInfo")			   ))
+			   (add-to-list 'js2-additional-externs "uInfo")
+			   ))
 ;; Always show file name in frame title
 (setq frame-title-format "%b")
 ;; Never require yes or no style answers
 (defalias 'yes-or-no-p 'y-or-n-p)
 ;; Always show line numbers in the left margin
-(global-linum-mode)
+(global-linum-mode t)
 ;; Always show column numbers
 (setq column-number-mode t)
 ;; Don't show the startup screen
 ;;(setq inhibit-startup-screen t)
-(cua-mode)
+;; Use Windows-like keybindings for copy&paste, undo and select
+(cua-mode t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; js2-mode (mooz fork)
@@ -41,29 +43,39 @@
 ; even for JavaScript. Load js2-mode also for .vbs files.
 (add-to-list 'auto-mode-alist '("\\.vbs$" . js2-mode))
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;; auto-complete-mode
-;; ;; See http://cx4a.org/software/auto-complete/
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (require 'auto-complete-config)
-;; (add-to-list 'ac-dictionary-directories 
-;; 	     (expand-file-name "ac-dict" idm-site-lisp))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; auto-complete-mode
+;; See http://cx4a.org/software/auto-complete/
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'auto-complete-config)
+(add-to-list 'ac-dictionary-directories 
+	     (expand-file-name "ac-dict" idm-site-lisp))
+(global-auto-complete-mode t)
+(setq ac-modes '(js2-mode))
+(setq ac-auto-start nil)
 
-;; (defun idm-ac-js2-mode ()
-;;   (setq ac-sources 
-;; 	'(ac-source-words-in-buffer ac-source-dictionary ac-source-yasnippet))
-;;   (add-to-list 'js2-additional-externs "uError")
-;; )
-
-;; (add-hook 'js2-mode-hook 'idm-ac-js2-mode)
-;; (global-auto-complete-mode t)
-;; (setq ac-auto-start 2)
-;; (setq ac-ignore-case t)
+(add-hook 'js2-mode-hook
+	   (lambda ()
+	     (local-set-key (kbd "C-SPC") 'auto-complete)
+	     (setq ac-user-dictionary ())
+	     (dolist (x js2-default-externs)
+	       (push x ac-user-dictionary))
+	     (setq ac-sources
+		   '(ac-source-words-in-buffer
+		     ac-source-dictionary
+		     ac-source-yasnippet))
+	     (setq ac-ignore-case t)
+	     ))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; yasnippet
 ;; ;; See https://github.com/capitaomorte/yasnippet
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (require 'yasnippet)
-;; (yas-global-mode 1)
+(require 'yasnippet)
+(yas-reload-all)
+(add-hook 'js2-mode-hook
+	   (lambda ()
+	     (yas-minor-mode)
+	     ))
+(setq yas-triggers-in-field t)
 

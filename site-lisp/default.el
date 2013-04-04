@@ -14,8 +14,10 @@
 			   (electric-indent-mode t)
 			   (electric-pair-mode t)
 			   (setq electric-pair-skip-self t)
+			   ;; create concatenated multiline strings on RET
 			   (local-set-key (kbd "RET") 'js2-line-break)
-			   (local-set-key (kbd "C-F") 'iwb)
+			   ;; indent whole buffer on Ctrl+Shift+f
+			   (local-set-key (kbd "C-S-f") 'iwb)
 			   (add-to-list 'js2-additional-externs "uError")
 			   (add-to-list 'js2-additional-externs "uInfo")			   ))
 ;; Always show file name in frame title

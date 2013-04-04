@@ -61,9 +61,12 @@
 	     (dolist (x js2-default-externs)
 	       (push x ac-user-dictionary))
 	     (setq ac-sources
-		   '(ac-source-words-in-buffer
+		   '(ac-source-yasnippet
 		     ac-source-dictionary
-		     ac-source-yasnippet))
+		     ;; words in buffer must come after yasnippet,
+		     ;; otherwise same snippet cannot be expanded twice
+		     ac-source-words-in-buffer
+		     ))
 	     (setq ac-ignore-case t)
 	     ))
 

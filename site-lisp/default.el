@@ -87,7 +87,6 @@
     )
   )
 
-(let ((a "b") (b 'a)) (message "Value of b is %s" b))
 (global-auto-complete-mode t)
 (setq ac-modes '(js2-mode))
 (setq ac-auto-start 6)
@@ -117,6 +116,7 @@
 (add-hook 'js2-mode-hook
 	   (lambda ()
 	     (yas-minor-mode)
+	     (local-set-key (kbd "C-M-SPC") 'yas-exit-snippet)
 	     ))
 (setq yas-triggers-in-field t)
 

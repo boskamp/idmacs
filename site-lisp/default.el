@@ -1,10 +1,25 @@
+(setq inhibit-startup-screen t)
+(server-start)
 (setq idm-dir-home (getenv "emacs_dir"))
 ;; Get path of site-lisp directory in a win32 emacs install
 (setq idm-dir-site-lisp (expand-file-name "site-lisp" idm-dir-home))
+
+(defun idm-activate ()
+  "Save current buffer and return to MMC"
+  (interactive)
+  (save-buffer)
+  (idm-quit)
+  )
+(defun idm-quit ()
+  "Quit IDMACS and return to MMC"
+  (interactive)
+  (server-edit)
+  (suspend-frame)
+  )
 ;; Credits to Rob Christie
 ;; http://emacsblog.org/2007/01/17/indent-whole-buffer/
-(defun iwb ()
-  "indent whole buffer"
+(defun idm-pretty-print ()
+  "Pretty print current buffer"
   (interactive)
   (delete-trailing-whitespace)
   (indent-region (point-min) (point-max) nil)
@@ -12,7 +27,7 @@
   )
 ;; Credits to stackoverflow.com user ExplodingRat
 ;; http://stackoverflow.com/questions/9688748/emacs-comment-uncomment-current-line
-(defun comment-or-uncomment-region-or-line ()
+(defun idm-toggle-line-comment ()
     "Comments or uncomments the region or the current line if there's no active region."
     (interactive)
     (let (beg end)
@@ -27,20 +42,30 @@
    (electric-indent-mode t)
    (electric-pair-mode t)
    (setq electric-pair-skip-self t)
+   ;; Poor man's Pretty Print: indent whole buffer
+   (local-set-key
+    (kbd "<C-f1>")
+    'idm-pretty-print)
+   ;; Poor man's Compile: move to next error/warning
+   (local-set-key
+    (kbd "<C-f2>")
+    'next-error)
+   ;; Poor main's Activate: save buffer, then quit
+   (local-set-key
+    (kbd "<C-f3>")
+    'idm-activate)
+   ;; Poor main's Activate: save buffer, then quit
+   (local-set-key
+    (kbd "<C-f12>")
+    'idm-quit)
+   ;; Toggle line comment
+   (local-set-key
+    (kbd "C-/")
+    'idm-toggle-line-comment)
    ;; create concatenated multiline strings on RET
    (local-set-key
     (kbd "RET")
     'js2-line-break)
-   ;; indent whole buffer on Ctrl+Shift+f
-   (local-set-key
-    (kbd "C-S-f")
-    'iwb)
-   ;; Uncomment line or region on Ctrl+Shift+7
-   (local-set-key
-    (kbd "C-/")
-    'comment-or-uncomment-region-or-line)
-   ;; Line comment also empty lines
-   (setq comment-empty-lines t)
    ;; TODO: load IDM symbols from file and add them to js2-additional-externs
    ;; (add-to-list 'js2-additional-externs "uError")
    ;; (add-to-list 'js2-additional-externs "uInfo")
@@ -57,6 +82,8 @@
 ;;(setq inhibit-startup-screen t)
 ;; Use Windows-like keybindings for copy&paste, undo and select
 (cua-mode t)
+;; Line comment also empty lines
+(setq comment-empty-lines t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; js2-mode (mooz fork)

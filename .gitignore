@@ -1,0 +1,5 @@
+#Exclude emacs backup files
+*~
+
+#Exlude generated class files
+/bin

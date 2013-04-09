@@ -1,54 +1,66 @@
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.mozilla.javascript.Context;
-
-import com.sap.idm.ic.ScriptGlobal;
-
-public class Main {
+public class builtin_functions {
 	private static Map go_callbacks_map = null;
 	private static String[] gt_callbacks_keys = null;
 	private static Map Par = null;
 	private final static String SNIPPETS_DIR = "SNIPPETS_DIR";
 	private final static String DICTIONARY_DIR = "DICTIONARY_DIR";
+	private final static String HELP_FILE = "HELP_FILE";
 
 	private static void idmacs_trace(String m) {
 		System.err.println(m);
 	}
 
-	private static void idmacs_define_global_data() throws Exception {
-		ScriptGlobal lo_script_global = null;
-		try {
-			Context lo_context = Context.enter();
-			try {
-				Class lo_sg_class = Class.forName("com.sap.idm.ic.ScriptGlobal");
-				idmacs_trace("lo_sg_class = " + lo_sg_class);
-			}
-			catch(Exception e) {
-				StringWriter sw = new StringWriter();
-				PrintWriter pw = new PrintWriter(sw);
-				e.printStackTrace(pw);
-				idmacs_trace(sw.getBuffer().toString());
+	private static void idmacs_builtins_open_datasource() throws Exception {
+		go_callbacks_map = new HashMap();
+
+		Pattern lo_help_pattern = Pattern.compile("(\\w+)(\\(.*)");
+		//BufferedReader r = new BufferedReader(new StringReader(uHelp(true)));
+
+		BufferedReader lo_help_reader = new BufferedReader(new FileReader(
+				(String) Par.get("HELP_FILE")));
+		String lv_line = null;
+
+		do {
+			lv_line = lo_help_reader.readLine();
+			if (lv_line == null)
+				break;
+			Matcher lo_help_matcher = lo_help_pattern.matcher(lv_line);
+
+			while (lo_help_matcher.find()) {
+				idmacs_trace("lo_help_matcher.group() = "
+						+ lo_help_matcher.group());
+				for (int i = 0; i <= lo_help_matcher.groupCount(); ++i) {
+					idmacs_trace("lo_help_matcher.group[" + i + "]="
+							+ lo_help_matcher.group(i));
+				}// for
+
+				String lv_func_name = lo_help_matcher.group(1);
+				idmacs_trace("lv_func_name = " + lv_func_name);
 				
-			}
-			lo_script_global = new ScriptGlobal(lo_context);
-			go_callbacks_map = lo_script_global.getAllCallbacks();
+				String lv_func_sigcom = lo_help_matcher.group(2);
+				idmacs_trace("lv_func_sigcom = " + lv_func_sigcom);
+				
+				go_callbacks_map.put(lv_func_name, lv_func_sigcom);
+			}// while(lo_help_matcher.find()) {
+		} while (true);
+		
+		lo_help_reader.close();
 
-			gt_callbacks_keys = (String[]) go_callbacks_map.keySet().toArray(
-					new String[] {});
-			Arrays.sort(gt_callbacks_keys);
-
-		} finally {
-			Context.exit();
-		}
-	}// idmacs_define_global_data
+		gt_callbacks_keys = (String[]) go_callbacks_map.keySet().toArray(
+				new String[] {});
+		Arrays.sort(gt_callbacks_keys);
+	}// idmacs_builtins_open_datasource
 
 	public static void idmacs_create_builtin_functions_snippets()
 			throws Exception {
@@ -86,7 +98,7 @@ public class Main {
 				idmacs_trace("lv_comment = " + lv_comment);
 
 				// if (lv_comment != null && lv_comment.trim().length() > 0) {
-				//     lo_snippet_writer.println(lv_comment);
+				// lo_snippet_writer.println(lv_comment);
 				// }
 				lo_snippet_writer.print(lv_func_name + "(");
 				int lv_num_args = 0;
@@ -197,6 +209,10 @@ public class Main {
 
 		return lo_dir;
 	}
+	
+	private static void idmacs_builtins_close_datasource() {
+		go_callbacks_map = null;
+	}
 
 	public static void main(String[] args) throws Exception {
 		Par = new HashMap();
@@ -207,9 +223,15 @@ public class Main {
 		String lv_dictionary_dir = args.length > 1 ? args[1] : ".dictionary";
 		Par.put(DICTIONARY_DIR, lv_dictionary_dir);
 
-		idmacs_define_global_data();
+		String lv_help_file = args.length > 2 ? args[2] : "idmacs_uhelp.txt";
+		Par.put(HELP_FILE, lv_help_file);
+
+		idmacs_builtins_open_datasource();
+
 		idmacs_create_builtin_functions_snippets();
 		idmacs_create_builtin_functions_dictionary();
+		
+		idmacs_builtins_close_datasource();
 	}// main
 
 }// Main

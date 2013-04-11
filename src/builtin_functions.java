@@ -16,6 +16,7 @@ public class builtin_functions {
 	private static String gv_help = null;
 	private static String gv_func_name = null;
 	private static String gv_func_signature = null;
+	private static ArrayList gt_func_names = null;
 	private static ArrayList gt_func_arg_names = null;
 	private static ArrayList gt_func_arg_opt = null;
 	private static String gv_func_comment = null;
@@ -26,24 +27,36 @@ public class builtin_functions {
 	private final static String HELP_FILE = "HELP_FILE";
 
 	// Regular Expression Constants
-	private static final String GC_REGEX_ONE_ARGUMENT = "([<\\[])?  # group: optional opening brackets for optional argument       \n"
-			+ "( \\w+(\\s+\\w+)? )                                # group: one or two argument words                             \n"
-			+ "(,>)?                                              # workaround for buggy args like <int aRemoveFlag,>     \n"
-			+ "[>\\]]?                                            # optional closing brackts for optional argument        \n";
+	private static final String GC_REGEX_ONE_ARGUMENT = "" // workaround for
+															// Eclipse pretty
+															// printer
+			+ "(                          # begin: one argument \n"
+			+ "  ( \\w+ ( \\s+\\w+)? )    # one or two regular argument words \n"
+			+ "| (   < ([^>]+)     >   )  # OR angle-bracketed optional arg \n"
+			+ "| ( \\[ ([^\\]]+) \\]   )  # OR square bracketed optional arg \n"
+			+ ")                          # end: one argument \n" + ""; // workaround
+																		// for
+																		// Eclipse
+																		// pretty
+																		// printer
 
-	private static final String GC_REGEX_ONE_FUNCTION = "(\\w+)   # function name                                         \n"
-			+ "\\s* \\*? \\s*                                 # workaround for buggy uExtEncode * (...)               \n"
-			+ "( \\(                                          # begin: optional signature                             \n"
-			+ "(                                              # begin group: whole argument list (without parens)     \n"
-			+ "(                                              # begin group: one arg + opt. comma + opt. whitespace   \n"
+	private static final String GC_REGEX_ONE_FUNCTION = "" // workaround for
+															// Eclipse pretty
+															// printer
+			+ "(\\w+)                    # function name \n"
+			+ "\\s* \\*? \\s*            # workaround for buggy uExtEncode \n"
+			+ "( \\(                     # begin: opt. signature incl. parens \n"
+			+ "(                         # begin: signature  excl. parens \n"
+			+ "(                         # begin: zero or more arguments  \n"
+			+ "\\s* ,? \\s*              # opt. comma surrounded by opt. whitspace \n"
 			+ GC_REGEX_ONE_ARGUMENT
-			+ ",?                                             # optional comma separating multiple arguments          \n"
-			+ "\\s*                                           # optional whitespace                                   \n"
-			+ ")*                                             # end of group: one arg + opt. comma + opt. whitespace  \n"
-			+ ")                                              # end group: whole argument list (without parens)       \n"
-			+ "  \\){1,2} )?                                  # end: optional signature                               \n"
-			+ "\\s* ;?                                        # optional whitespace and ;                             \n"
-			+ "( ( \\s* /\\* .*? \\*/ \\s* )+ )?              # optional multi-line comment (note reluctance!)        \n";
+			+ "\\s* ,? \\s*              # opt. comma surrounded by opt. whitspace \n"
+			+ ")*                        # end: zero or more arguments  \n"
+			+ ")                         # end: signature  excl. parens \n"
+			+ "  \\){1,2} )?             # end: opt. signature incl. parens, workaround uExpandString \n"
+			+ "\\s* ;?                   # opt. whitespace and semicolon \n"
+			+ "( ( \\s* /\\* .*? \\*/ \\s* )+ )? # optional multi-line comment (reluctant quantifier!) \n"
+			+ ""; // workaround for Eclipse pretty printer
 
 	private static void idmacs_trace(String m) {
 		System.err.println(m);
@@ -71,21 +84,24 @@ public class builtin_functions {
 		lo_help_reader.close();
 
 		gv_help = lo_help_sb.toString();
+
+		gt_func_names = new ArrayList();		
 	}// idmacs_builtins_open_datasource
 
-	public static void idmacs_create_builtin_functions_snippets()
-			throws Exception {
+	public static void idmacs_builtins_next_entry() throws Exception {
 
 		Pattern lo_help_pattern = Pattern.compile(GC_REGEX_ONE_FUNCTION,
 				Pattern.COMMENTS | Pattern.DOTALL);
 
 		Matcher lo_help_matcher = lo_help_pattern.matcher(gv_help);
+
 		int lv_match_number = 0;
+		
 		while (lo_help_matcher.find()) {
 			String lv_whole_match = lo_help_matcher.group(0);
 			gv_func_name = lo_help_matcher.group(1);
 			gv_func_signature = lo_help_matcher.group(3);
-			gv_func_comment = lo_help_matcher.group(6);
+			gv_func_comment = lo_help_matcher.group(13);
 
 			if (lv_whole_match.trim().equals(gv_func_name)) {
 				idmacs_trace("Ignoring odd-looking match " + lv_whole_match);
@@ -108,10 +124,20 @@ public class builtin_functions {
 			// Cleaning up the global argument list objects is done inside
 			// ==> must always be invoked, even for empty (null) signatures
 			idmacs_builtins_parse_signature();
-			
+
 			idmacs_builtins_write_snippet();
+			
+			//Collect function names for building dictionary out of loop
+			gt_func_names.add(gv_func_name);
 
 		}// while (lo_help_matcher.find())
+
+		//Create dictionary file containing all function names for yasnippet
+		idmacs_builtins_create_dictionary();
+
+		idmacs_trace("Total number of functions successfully parsed: "
+				+ lv_match_number);
+
 	}// idmacs_create_builtin_functions_snippets
 
 	private static void idmacs_builtins_parse_signature() throws Exception {
@@ -131,15 +157,34 @@ public class builtin_functions {
 				idmacs_trace("lo_one_arg_matcher.group(" + i + "): \""
 						+ lo_one_arg_matcher.group(i) + "\"");
 			}
-			String lv_argument_name = lo_one_arg_matcher.group(2);
-			boolean lv_argument_opt = lo_one_arg_matcher.group(1) != null;
+			String lv_regular_arg_name = lo_one_arg_matcher.group(2);
+			idmacs_trace("lv_regular_arg_name=\"" + lv_regular_arg_name + "\"");
+
+			String lv_angle_arg_name = lo_one_arg_matcher.group(5);
+			idmacs_trace("lv_angle_arg_name=\"" + lv_angle_arg_name + "\"");
+			;
+
+			String lv_square_arg_name = lo_one_arg_matcher.group(7);
+			idmacs_trace("lv_square_arg_name=\"" + lv_square_arg_name + "\"");
+
+			String lv_argument_name = lv_regular_arg_name != null ? lv_regular_arg_name
+					: lv_angle_arg_name != null ? lv_angle_arg_name
+							: lv_square_arg_name;
 
 			// Replace sequences of white space
 			// in argument names with one underscore
 			lv_argument_name = lv_argument_name.replaceAll("\\s+", "_");
 
+			// Remove any ill-positioned commas from argument names
+			lv_argument_name = lv_argument_name.replaceAll(",", "");
+
 			idmacs_trace("Next argument name:     \"" + lv_argument_name + "\"");
+
+			boolean lv_argument_opt = lv_angle_arg_name != null
+					|| lv_square_arg_name != null;
+
 			idmacs_trace("Next argument optional: \"" + lv_argument_opt + "\"");
+
 			gt_func_arg_names.add(lv_argument_name);
 			gt_func_arg_opt.add(new Boolean(lv_argument_opt));
 		}// while(lo_one_arg_matcher.find())
@@ -157,14 +202,14 @@ public class builtin_functions {
 		lo_snippet_writer.println("# name: " + gv_func_name);
 		lo_snippet_writer.println("# --");
 		lo_snippet_writer.print(gv_func_name + "(");
-		
-		//Process arguments only if function really has arguments
+
+		// Process arguments only if function really has arguments
 		if (gt_func_arg_names != null) {
-			//Overall number of arguments in signature
+			// Overall number of arguments in signature
 			int lv_args_count = gt_func_arg_names.size();
 
 			for (int i = 0; i < lv_args_count; ++i) {
-				//The number of the current argument, starting with 1
+				// The number of the current argument, starting with 1
 				int lv_func_arg_num = i + 1;
 				String lv_func_arg_name = (String) gt_func_arg_names.get(i);
 				boolean lv_func_arg_opt = ((Boolean) gt_func_arg_opt.get(i))
@@ -194,37 +239,36 @@ public class builtin_functions {
 
 			}// for
 
-			//Put closing parenthesis on a separate line,
-			//but only for multi-argument functions
+			// Put closing parenthesis on a separate line,
+			// but only for multi-argument functions
 			if (lv_args_count > 1) {
 				lo_snippet_writer.println();
 			}
 		}// if(gt_func_arg_names != null) {
 
-		//Always close signature parens
+		// Always close signature parens
 		lo_snippet_writer.print(")$0");
-		
+
 		// Flush and close current snippet file
 		lo_snippet_writer.flush();
 		lo_snippet_writer.close();
 	}
 
-	private static void idmacs_create_builtin_functions_dictionary()
+	private static void idmacs_builtins_create_dictionary()
 			throws Exception {
-		// File lo_dictionary_dir = mkdirs((String) Par.get(DICTIONARY_DIR));
-		// File lo_dictionary_file = new File(lo_dictionary_dir, "js2-mode");
-		// FileOutputStream lo_dictionary_fos = new FileOutputStream(
-		// lo_dictionary_file);
-		// PrintWriter lo_dictionary_writer = new
-		// PrintWriter(lo_dictionary_fos);
-		//
-		// for (int i = 0; i < gt_callbacks_keys.length; ++i) {
-		// String gv_func_name = gt_callbacks_keys[i];
-		// lo_dictionary_writer.println(gv_func_name);
-		// }// for
-		//
-		// lo_dictionary_writer.flush();
-		// lo_dictionary_writer.close();
+		File lo_dictionary_dir = mkdirs((String) Par.get(DICTIONARY_DIR));
+		File lo_dictionary_file = new File(lo_dictionary_dir, "js2-mode");
+		FileOutputStream lo_dictionary_fos = new FileOutputStream(
+				lo_dictionary_file);
+		PrintWriter lo_dictionary_writer = new PrintWriter(lo_dictionary_fos);
+
+		for (int i = 0; i < gt_func_names.size(); ++i) {
+			String gv_func_name = (String) gt_func_names.get(i);
+			lo_dictionary_writer.println(gv_func_name);
+		}// for
+
+		lo_dictionary_writer.flush();
+		lo_dictionary_writer.close();
 	}
 
 	private static File mkdirs(String iv_dir_name) throws Exception {
@@ -260,8 +304,7 @@ public class builtin_functions {
 
 		idmacs_builtins_open_datasource();
 
-		idmacs_create_builtin_functions_snippets();
-		idmacs_create_builtin_functions_dictionary();
+		idmacs_builtins_next_entry();
 
 		idmacs_builtins_close_datasource();
 	}// main

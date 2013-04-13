@@ -39,6 +39,8 @@
 (add-hook
  'js2-mode-hook
  (lambda()
+   ;; (electric-layout-mode)
+   ;; (setq electric-layout-rules '(?\{ . after))
    (electric-indent-mode t)
    (electric-pair-mode t)
    (setq electric-pair-skip-self t)

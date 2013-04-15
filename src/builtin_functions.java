@@ -1,3 +1,22 @@
+// Copyright 2013 Lambert Boskamp
+//
+// Author: Lambert Boskamp <lambert@boskamp-consulting.com.nospam>
+//
+// This file is part of IDMacs.
+//
+// IDMacs is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// IDMacs is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with IDMacs.  If not, see <http://www.gnu.org/licenses/>.
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -65,9 +84,9 @@ public class builtin_functions {
 	private static ArrayList go_func_arg_opt = null;
 
 	// GLOBAL CONSTANTS: GENERAL ====================================
-	private final static String GC_DIR_SNIPPETS = "DIR_SNIPPETS";
-	private final static String GC_DIR_DICTIONARY = "DIR_DICTIONARY";
-	private final static String GC_FILE_HELP = "FILE_HELP";
+	private final static String GC_SNIPPETS_DIR = "SNIPPETS_DIR";
+	private final static String GC_DICTIONARY_DIR = "DICTIONARY_DIR";
+	private final static String GC_HELP_FILE = "HELP_FILE";
 
 	// GLOBAL CONSTANTS: REGULAR EXPRESSIONS ========================
 	/**
@@ -81,7 +100,7 @@ public class builtin_functions {
 															// Eclipse pretty
 															// printer
 			+ "(                          # begin: one argument \n"
-			+ "  ( \\w+ ( \\s+\\w+)? )    # one or two regular argument words \n"
+			+ "  ( \\w+ ( \\s+\\w+)?   )  # one or two regular argument words \n"
 			+ "| (   < ([^>]+)     >   )  # OR angle-bracketed optional arg \n"
 			+ "| ( \\[ ([^\\]]+) \\]   )  # OR square bracketed optional arg \n"
 			+ ")                          # end: one argument \n"
@@ -324,7 +343,7 @@ public class builtin_functions {
 	 * @throws Exception
 	 */
 	private static void idmacs_builtins_write_snippet() throws Exception {
-		File lo_snippets_dir = mkdirs((String) Par.get(GC_DIR_SNIPPETS));
+		File lo_snippets_dir = mkdirs((String) Par.get(GC_SNIPPETS_DIR));
 		File lo_snippet_file = new File(lo_snippets_dir, gv_func_name);
 		FileOutputStream lo_snippet_fos = new FileOutputStream(lo_snippet_file);
 		PrintWriter lo_snippet_writer = new PrintWriter(lo_snippet_fos);
@@ -397,7 +416,7 @@ public class builtin_functions {
 	 * @throws Exception
 	 */
 	private static void idmacs_builtins_create_dictionary() throws Exception {
-		File lo_dictionary_dir = mkdirs((String) Par.get(GC_DIR_DICTIONARY));
+		File lo_dictionary_dir = mkdirs((String) Par.get(GC_DICTIONARY_DIR));
 		File lo_dictionary_file = new File(lo_dictionary_dir, "js2-mode");
 		FileOutputStream lo_dictionary_fos = new FileOutputStream(
 				lo_dictionary_file);
@@ -432,13 +451,13 @@ public class builtin_functions {
 		Par = new HashMap();
 
 		String lv_snippets_dir = args.length > 0 ? args[0] : ".snippets";
-		Par.put(GC_DIR_SNIPPETS, lv_snippets_dir);
+		Par.put(GC_SNIPPETS_DIR, lv_snippets_dir);
 
 		String lv_dictionary_dir = args.length > 1 ? args[1] : ".dictionary";
-		Par.put(GC_DIR_DICTIONARY, lv_dictionary_dir);
+		Par.put(GC_DICTIONARY_DIR, lv_dictionary_dir);
 
 		String lv_help_file = args.length > 2 ? args[2] : "idmacs_uhelp.txt";
-		Par.put(GC_FILE_HELP, lv_help_file);
+		Par.put(GC_HELP_FILE, lv_help_file);
 
 		idmacs_builtins_open_datasource();
 

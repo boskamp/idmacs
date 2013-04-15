@@ -24,7 +24,11 @@
 /.snippets
 
 # Exclude generated dictionaries
-/.dictionaries
+/.dictionary
 
 # Exclude the generated help file idmacs_uhelp.txt
 idmacs_uhelp.txt
+
+# Exclude any shell scripts in the root directory
+/*.sh
+

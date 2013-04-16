@@ -423,8 +423,8 @@ public class builtin_functions {
 		PrintWriter lo_dictionary_writer = new PrintWriter(lo_dictionary_fos);
 
 		for (int i = 0; i < go_func_names.size(); ++i) {
-			String gv_func_name = (String) go_func_names.get(i);
-			lo_dictionary_writer.println(gv_func_name);
+			String lv_func_name = (String) go_func_names.get(i);
+			lo_dictionary_writer.println(lv_func_name);
 		}// for
 
 		lo_dictionary_writer.flush();

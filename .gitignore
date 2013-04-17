@@ -1,0 +1,5 @@
+# Emacs backup files
+*~
+
+# Generation directory for byte-compiling Elisp files
+/gen

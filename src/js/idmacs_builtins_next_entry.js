@@ -1,13 +1,47 @@
+// Copyright 2013 Lambert Boskamp
+//
+// Author: Lambert Boskamp <lambert@boskamp-consulting.com.nospam>
+//
+// This file is part of IDMacs.
+//
+// IDMacs is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// IDMacs is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with IDMacs.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
- * Creates snippet files for each built-in function, and one dictionary file
- * containing all built-in function names.
+ * Reads the content of a file containing the names, signatures and
+ * documentation of built-in functions, and creates snippet files
+ * for each of these functions. It will also create one dictionary
+ * file containing all built-in function names.
  *
- * Process the content of global variable gv_help in one step, i.e. this
- * function is designed to be invoked ONLY ONCE, and it requires that
- * idmacs_builtins_open_datasource() must have been executed before, because
- * that initializes gv_help.
+ * This function is designed to be invoked ONLY ONCE. It will process
+ * the complete content of HELP_FILE (see below) in one step.
  *
- * Preconditions: Global gv_help contains string returned by uHelp()
+ * Parameters:
+ *   Par - java.util.List containing the following data:
+ *         Key:   SNIPPETS_DIR
+ *         Value: Directory path as string where to create snippet files;
+ *                will be created if it doesn't exist yet
+ *
+ *         Key:   DICTIONARY_DIR
+ *         Value: Directory path as string where to create dictionary file;
+ *                will be created if it doesn't exist yet
+ *
+ *         Key:   HELP_FILE
+ *         Value: Name of file into which the built-in function descriptions
+ *                have been exported before
+ *
+ * Returns:
+ *   nothing
  */
 function idmacs_builtins_next_entry(Par){
     var LC_SCRIPT = "idmacs_builtins_next_entry: ";

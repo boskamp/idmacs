@@ -1,19 +1,43 @@
+// Copyright 2013 Lambert Boskamp
+//
+// Author: Lambert Boskamp <lambert@boskamp-consulting.com.nospam>
+//
+// This file is part of IDMacs.
+//
+// IDMacs is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// IDMacs is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with IDMacs.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Write the snippet file for function currently being processed.
  *
  * Preconditions:
- * ==============
- * idmacs_builtins_define_globals() has been executed to define global
- * variables
- * 
- * Global gv_func_name contains function name
+ *   1. Global gv_func_name contains function name
  *
- * Global go_func_arg_names contains java.util.List of argument names, or is
- * null for functions with empty signature.
+ *   2. Global go_func_arg_names contains java.util.List
+ *      of argument names, or is null for functions
+ *      with empty signature.
  *
- * Global go_func_arg_opt contains java.util.List of java.lang.Boolean flags
- * indicating whether the index-corresponding element of go_func_arg_names
- * is optional (true) or mandatory (false).
+ *   3. Global go_func_arg_opt contains java.util.List
+ *      of java.lang.Boolean flags indicating whether
+ *      the index-corresponding element of go_func_arg_names
+ *      is optional (true) or mandatory (false) argument.
+ *
+ * Parameters:
+ *   iv_snippets_dir
+ *     - string name of directory where to generate snippet file
+ *
+ * Returns:
+ *   nothing
  */
 function idmacs_builtins_write_snippet(iv_snippets_dir) {
     var LC_SCRIPT = "idmacs_builtins_write_snippet: ";

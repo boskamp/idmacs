@@ -1,3 +1,22 @@
+// Copyright 2013 Lambert Boskamp
+//
+// Author: Lambert Boskamp <lambert@boskamp-consulting.com.nospam>
+//
+// This file is part of IDMacs.
+//
+// IDMacs is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// IDMacs is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with IDMacs.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Parses the signature string of the current function, and stores the
  * argument names found in the global list go_func_arg_names. For each
@@ -5,14 +24,16 @@
  * whether the argument is optional or not.
  *
  * Preconditions:
- * ==============
- * idmacs_builtins_define_globals() has been executed to define global
- * variables
+ *   1. Global gv_func_name contains current function name (for tracing)
  * 
- * Global gv_func_signature contains that functions signature
- * string
+ *   2. Global gv_func_signature contains that functions signature
+ *      as a string, but without any surrounding parentheses
  *
- * Global gv_func_name contains current function name (for tracing)
+ * Parameters:
+ *   none
+ *
+ * Returns:
+ *   nothing
  */
 function idmacs_builtins_parse_signature()  {
     // If current function doesn't have any arguments, we're done

@@ -122,7 +122,7 @@ set gv_emacs_dir_default=!gv_script_drive!\emacs-24.1
 
 set "gv_emacs_dir="
 echo(
-echo Enter directory you unzipped Emacs24 into, or q to quit
+echo Enter Emacs24 directory, or q to quit
 set /p gv_emacs_dir="[!gv_emacs_dir_default!]: " %=%
 
 rem Use default if user just pressed Enter
@@ -134,6 +134,10 @@ if /i "!gv_emacs_dir!" == "q" (
     echo Installation aborted by user. Good bye.
     echo(
 ) & goto :eof
+
+rem Remove surrounding quote and/or trailing backslash, if any
+call :sub_normalize_dir_name !gv_emacs_dir!
+set gv_emacs_dir=!gv_return!
 
 rem  ******************************************************************
 echo(
@@ -429,4 +433,42 @@ echo   --debug:   Log full output from all commands into dev_idmacs_install
 echo   --help:    display this help
 
 endlocal
+goto :eof
+
+rem ******************************************************************
+rem * Subroutine: sub_normalize_dir_name
+rem *
+rem * Check if %1 is surrounded by double quotes. If so, remove them.
+rem * Then check if the remaining string ends with a backslash
+rem * character. If so, remove that as well.
+rem *
+rem * Parameters:
+rem * %1 - Directory name
+rem *
+rem * Returns:
+rem * Unquoted directory name without trailing backslash
+rem ******************************************************************
+:sub_normalize_dir_name
+setlocal
+
+set lv_dir_name=%1
+set lv_first_char=!lv_dir_name:~0,1!
+set lv_last_char=!lv_dir_name:~-1,1!
+
+rem Surrounding brackets required for strings containing quotes
+if [!lv_first_char!] == [^"] (
+   if [!lv_last_char!] == [^"] (
+      set lv_dir_name=!lv_dir_name:~1,-1!
+   )
+)
+
+echo After removing quotes: lv_dir_name=!lv_dir_name!
+
+set lv_last_char=!lv_dir_name:~-1,1!
+if [!lv_last_char!] == [\] set lv_dir_name=!lv_dir_name:~0,-1!
+
+echo After removing backslash: lv_dir_name=!lv_dir_name!
+
+endlocal & set gv_return=%lv_dir_name%
+
 goto :eof

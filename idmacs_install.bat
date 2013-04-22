@@ -462,12 +462,8 @@ if [!lv_first_char!] == [^"] (
    )
 )
 
-echo After removing quotes: lv_dir_name=!lv_dir_name!
-
 set lv_last_char=!lv_dir_name:~-1,1!
 if [!lv_last_char!] == [\] set lv_dir_name=!lv_dir_name:~0,-1!
-
-echo After removing backslash: lv_dir_name=!lv_dir_name!
 
 endlocal & set gv_return=%lv_dir_name%
 

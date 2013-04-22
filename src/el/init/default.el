@@ -17,7 +17,6 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with IDMacs.  If not, see <http://www.gnu.org/licenses/>.
 
-(setq inhibit-startup-screen t)
 (server-start)
 (setq idm-dir-home (getenv "emacs_dir"))
 ;; Get path of site-lisp directory in a win32 emacs install
@@ -54,6 +53,32 @@
             (setq beg (region-beginning) end (region-end))
 	  (setq beg (line-beginning-position) end (line-end-position)))
         (comment-or-uncomment-region beg end)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Add all IDM internal functions to js2-additional-externs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun idm-js2-declare-builtins ()
+  "Make all IDM built-in function names declared in js2-mode"
+  (interactive)
+  (message "idm-js2-declare-builtins executed")
+  (setq js2-global-externs nil)
+  (with-temp-buffer 
+      (insert-file-contents
+       (concat idm-dir-home "/idmacs-dict/builtins/js2-mode")
+       )
+      (save-excursion
+	(goto-char (point-min))
+	(while (re-search-forward "[[:word:]]+" (point-max) t)
+	  (let ((func-name (match-string 0)))
+	    ;;TODO: this becomes buffer local
+	    (push func-name js2-global-externs)
+	    (message "Declared %s" func-name)
+	    )
+	  )
+	)
+      )
+  )
+
 ;; Enable electric-indent in js2-mode
 (add-hook
  'js2-mode-hook
@@ -87,9 +112,6 @@
    (local-set-key
     (kbd "RET")
     'js2-line-break)
-   ;; TODO: load IDM symbols from file and add them to js2-additional-externs
-   ;; (add-to-list 'js2-additional-externs "uError")
-   ;; (add-to-list 'js2-additional-externs "uInfo")
    ))
 ;; Always show file name in frame title
 (setq frame-title-format "%b")
@@ -105,6 +127,8 @@
 (cua-mode t)
 ;; Line comment also empty lines
 (setq comment-empty-lines t)
+;; Load IDM symbols from file and add them to global list of externs
+(idm-js2-declare-builtins)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; js2-mode (mooz fork)
@@ -167,4 +191,3 @@
 	     (local-set-key (kbd "C-M-SPC") 'yas-exit-snippet)
 	     ))
 (setq yas-triggers-in-field t)
-

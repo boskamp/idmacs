@@ -23,6 +23,9 @@ setlocal enableextensions enabledelayedexpansion
 rem Number of file descriptor to which command output will go.
 set gv_stdout=nul
 
+rem Name of trace file
+set gv_trace_file=dev_idmacs_install
+
 rem Global return variable set by sub routines
 rem gv_return=
 
@@ -66,8 +69,8 @@ for %%g in (%*) do (
     set gv_arg_recognized=false
 
     if "%%g" == "--debug" (
-        set gv_stdout=dev_idmacs_install
-	echo >!gv_stdout!
+        set gv_stdout=!gv_trace_file!
+	echo Start trace >!gv_trace_file!
 	echo(
 	echo Logging all command output to file !gv_stdout!
 	set gv_arg_recognized=true
@@ -209,20 +212,35 @@ echo Byte-compiling Elisp files
 rem  ******************************************************************
 
 rem Emacs arguments for byte compilation of Elisp files in batch mode
-set gv_arg_byte_compile=--batch -q --no-site-file -f batch-byte-compile
+rem Adding the generation directory to the load-path is a workaround;
+rem the proper solution would be to compile files according to their
+rem dependency relation, from leaf (no dependencies) to root.
+
+set gv_arg_byte_compile=-batch ^
+    --no-site-file ^
+    -eval "(add-to-list 'load-path \".\")" ^
+    -f batch-byte-compile
+
+rem Change current working directory to generation dir
+pushd "!gv_gen_dir!"
+
+rem Byte compile all .el files
+"!gv_emacs_exe!" !gv_arg_byte_compile! *.el >>!gv_stdout! 2>&1
+
+rem Return to previous working directory
+popd
 
 rem I don't understand why but the FOR loop doesn't work with delayed
 rem variable expansion syntax, i.e. !gv_gen_dir! doesn't do anything.
 
 for /r "%gv_gen_dir%" %%g in (*.el) do (
-    "!gv_emacs_exe!" !gv_arg_byte_compile! "%%g" >>!gv_stdout! 2>&1
-
     set lv_temp=%%g
+
     set lv_elc_file=!lv_temp!c
 
     if not exist "!lv_elc_file!" (
         echo ERROR: "!lv_elc_file!" could not be generated.
-	echo ERROR: Please retry the installation with --verbose
+	echo ERROR: Please retry the installation with --debug
 	echo ERROR: and check for compilation error messages.
 	echo(
 	echo Aborting installation.
@@ -318,8 +336,8 @@ rem ******************************************************************
 rem * Subroutine: sub_copy_el_files_to_dir
 rem *
 rem * Parameters:
-rem * %1 - Source directory to search for *.el files
-rem * %2 - Target directory to copy to
+rem * %1 - Quoted source directory to search for *.el files
+rem * %2 - Quoted target directory to copy to
 rem *
 rem * Returns:
 rem * nothing
@@ -327,8 +345,8 @@ rem ******************************************************************
 :sub_copy_el_files_to_dir
 setlocal
 
-set lv_file_pattern=%1\*.el
-set lv_target_dir=%2
+set lv_file_pattern=%~1\*.el
+set lv_target_dir=%~2
 set lv_stdout=%3
 
 copy /y ^
@@ -429,7 +447,7 @@ setlocal
 
 echo(
 echo Usage: %1
-echo   --debug:   Log full output from all commands into dev_idmacs_install
+echo   --debug:   Log full output from all commands into !gv_trace_file!
 echo   --help:    display this help
 
 endlocal
@@ -468,3 +486,19 @@ if [!lv_last_char!] == [\] set lv_dir_name=!lv_dir_name:~0,-1!
 endlocal & set gv_return=%lv_dir_name%
 
 goto :eof
+
+rem ******************************************************************
+rem * Subroutine: sub_trace
+rem *
+rem * Write all command line arguments to a trace file
+rem *
+rem * Parameters:
+rem * %* - Strings to be written to trace file
+rem *
+rem * Returns:
+rem * nothing
+rem ******************************************************************
+:sub_trace
+setlocal
+echo %* >>!gv_trace_file!
+endlocal

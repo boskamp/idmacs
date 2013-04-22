@@ -53,8 +53,8 @@ set gv_src_dir=!gv_script_dir!\src
 rem Directory underneath which submodules with Elisp sources are
 set gv_src_el_dir=!gv_src_dir!\el
 
-rem Directory where Windows batch scripts are
-set gv_src_bat_dir=!gv_src_dir!\bat
+rem Directory where Windows CMD (aka batch) scripts are
+set gv_src_cmd_dir=!gv_src_dir!\cmd
 
 rem ******************************************************************
 rem Parse command line arguments
@@ -256,7 +256,7 @@ copy /y ^
     >>!gv_stdout! 2>&1
 
 copy /y ^
-    "!gv_src_bat_dir!\*" ^
+    "!gv_src_cmd_dir!\*" ^
     "!gv_emacs_bin_dir!" ^
     >>!gv_stdout! 2>&1
 

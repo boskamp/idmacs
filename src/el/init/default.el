@@ -16,27 +16,24 @@
 ;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with IDMacs.  If not, see <http://www.gnu.org/licenses/>.
-
 (server-start)
-(setq idm-dir-home (getenv "emacs_dir"))
-;; Get path of site-lisp directory in a win32 emacs install
-(setq idm-dir-site-lisp (expand-file-name "site-lisp" idm-dir-home))
+(setq idmacs-emacs-dir (getenv "emacs_dir"))
 
-(defun idm-activate ()
+(defun idmacs-activate ()
   "Save current buffer and return to MMC"
   (interactive)
   (save-buffer)
-  (idm-quit)
+  (idmacs-quit)
   )
-(defun idm-quit ()
-  "Quit IDMACS and return to MMC"
+(defun idmacs-quit ()
+  "Quit IDMacs and return to MMC"
   (interactive)
   (server-edit)
   (suspend-frame)
   )
 ;; Credits to Rob Christie
 ;; http://emacsblog.org/2007/01/17/indent-whole-buffer/
-(defun idm-pretty-print ()
+(defun idmacs-pretty-print ()
   "Pretty print current buffer"
   (interactive)
   (delete-trailing-whitespace)
@@ -45,7 +42,7 @@
   )
 ;; Credits to stackoverflow.com user ExplodingRat
 ;; http://stackoverflow.com/questions/9688748/emacs-comment-uncomment-current-line
-(defun idm-toggle-line-comment ()
+(defun idmacs-toggle-line-comment ()
     "Comments or uncomments the region or the current line if there's no active region."
     (interactive)
     (let (beg end)
@@ -57,137 +54,168 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Add all IDM internal functions to js2-additional-externs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun idm-js2-declare-builtins ()
+(defun idmacs-js2-declare-builtins ()
   "Make all IDM built-in function names declared in js2-mode"
   (interactive)
-  (message "idm-js2-declare-builtins executed")
+  (setq debug-on-quit t)
   (setq js2-global-externs nil)
-  (with-temp-buffer 
-      (insert-file-contents
-       (concat idm-dir-home "/idmacs-dict/builtins/js2-mode")
-       )
-      (save-excursion
-	(goto-char (point-min))
-	(while (re-search-forward "[[:word:]]+" (point-max) t)
-	  (let ((func-name (match-string 0)))
-	    ;;TODO: this becomes buffer local
-	    (push func-name js2-global-externs)
-	    (message "Declared %s" func-name)
-	    )
-	  )
-	)
-      )
-  )
+  (let ((builtins-dict-file 
+	 (concat idmacs-emacs-dir "/etc/idmacs/dict/builtins/js2-mode")))
+    (if (file-exists-p builtins-dict-file)
+	(save-excursion
+	  (with-temp-buffer 
+	    (goto-char (point-min))
+	    (insert-file-contents builtins-dict-file)
+	    ;; Using "^.*$" instead of "^.+$" results in endless loop,
+	    ;; so search for non-empty lines only
+	    (while (re-search-forward "^.+$" (point-max) t)
+	      (let ((func-name (match-string 0)))
+		(push func-name js2-global-externs)
+		(message "Declared %s" func-name)
+		);;let
+	      );;while
+	    );;with-temp-buffer
+	  );;save-excursion
+      );;if
+    );;let
+  );;defun
 
-;; Enable electric-indent in js2-mode
-(add-hook
- 'js2-mode-hook
- (lambda()
-   ;; (electric-layout-mode)
-   ;; (setq electric-layout-rules '(?\{ . after))
-   (electric-indent-mode t)
-   (electric-pair-mode t)
-   (setq electric-pair-skip-self t)
-   ;; Poor man's Pretty Print: indent whole buffer
-   (local-set-key
-    (kbd "<C-f1>")
-    'idm-pretty-print)
-   ;; Poor man's Compile: move to next error/warning
-   (local-set-key
-    (kbd "<C-f2>")
-    'next-error)
-   ;; Poor main's Activate: save buffer, then quit
-   (local-set-key
-    (kbd "<C-f3>")
-    'idm-activate)
-   ;; Poor main's Activate: save buffer, then quit
-   (local-set-key
-    (kbd "<C-f12>")
-    'idm-quit)
-   ;; Toggle line comment
-   (local-set-key
-    (kbd "C-/")
-    'idm-toggle-line-comment)
-   ;; create concatenated multiline strings on RET
-   (local-set-key
-    (kbd "RET")
-    'js2-line-break)
-   ))
 ;; Always show file name in frame title
 (setq frame-title-format "%b")
+
 ;; Never require yes or no style answers
 (defalias 'yes-or-no-p 'y-or-n-p)
+
 ;; Always show line numbers in the left margin
 (global-linum-mode t)
+
 ;; Always show column numbers
 (setq column-number-mode t)
+
 ;; Don't show the startup screen
 ;;(setq inhibit-startup-screen t)
 ;; Use Windows-like keybindings for copy&paste, undo and select
 (cua-mode t)
+
 ;; Line comment also empty lines
 (setq comment-empty-lines t)
+
 ;; Load IDM symbols from file and add them to global list of externs
-(idm-js2-declare-builtins)
+(idmacs-js2-declare-builtins)
+
+;; Always highlight matching parens
+(show-paren-mode t)
+
+;; (electric-layout-mode)
+;; (setq electric-layout-rules '(?\{ . after))
+
+;; Globally enable electric-indent and electric-pair
+(electric-indent-mode t)
+(electric-pair-mode t)
+(setq electric-pair-skip-self t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; js2-mode (mooz fork)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (autoload 'js2-mode "js2-mode" nil t)
+
 (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
 ; SAP IDM always uses .vbs as a script file extension,
 ; even for JavaScript. Load js2-mode also for .vbs files.
 (add-to-list 'auto-mode-alist '("\\.vbs$" . js2-mode))
+
+(add-hook
+ 'js2-mode-hook
+ (lambda()
+   ;; Poor man's Pretty Print: indent whole buffer
+   (local-set-key
+    (kbd "<S-f1>")
+    'idmacs-pretty-print)
+
+   ;; Poor man's Compile: move to next error/warning
+   (local-set-key
+    (kbd "<C-f2>")
+    'next-error)
+
+   ;; Poor main's Activate: save buffer, then quit
+   (local-set-key
+    (kbd "<C-f3>")
+    'idmacs-activate)
+
+   ;; Poor main's Activate: save buffer, then quit
+   (local-set-key
+    (kbd "<C-f12>")
+    'idmacs-quit)
+
+   ;; Toggle line comment
+   (local-set-key
+    (kbd "C-/")
+    'idmacs-toggle-line-comment)
+
+   ;; Create concatenated multiline strings on RET
+   (local-set-key
+    (kbd "RET")
+    'js2-line-break)
+   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; auto-complete-mode
 ;; See http://cx4a.org/software/auto-complete/
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'auto-complete-config)
-(add-to-list 'ac-dictionary-directories 
-	     (expand-file-name "ac-dict" idm-dir-site-lisp))
 
-(let ((idm-dir-dict (expand-file-name "idmacs-dict" idm-dir-home)))
-  (let ((idm-dir-dict-tables     (expand-file-name "tables"     idm-dir-dict))
-	(idm-dir-dict-views      (expand-file-name "views"      idm-dir-dict))
-	(idm-dir-dict-attributes (expand-file-name "attributes" idm-dir-dict))
-	)
-  
-    (add-to-list 'ac-dictionary-directories idm-dir-dict-tables)
-    (add-to-list 'ac-dictionary-directories idm-dir-dict-views)
-    (add-to-list 'ac-dictionary-directories idm-dir-dict-attributes)
-    )
-  )
+(let ((idmacs-dir-dict (concat idmacs-emacs-dir "/etc/idmacs/dict/")))
+  (add-to-list 
+   'ac-dictionary-directories 
+   (concat idmacs-dir-dict "tables"))
+
+  (add-to-list 
+   'ac-dictionary-directories 
+   (concat idmacs-dir-dict "views"))
+
+  (add-to-list 
+   'ac-dictionary-directories 
+   (concat idmacs-dir-dict "attributes"))
+
+  (add-to-list 
+   'ac-dictionary-directories 
+   (concat idmacs-dir-dict "builtins"))
+
+  );;let
 
 (global-auto-complete-mode t)
+
 (setq ac-modes '(js2-mode))
+
 (setq ac-auto-start 6)
 
 (add-hook 'js2-mode-hook
-	   (lambda ()
-	     (local-set-key (kbd "C-SPC") 'auto-complete)
-	     (setq ac-user-dictionary ())
-	     (dolist (x js2-default-externs)
-	       (push x ac-user-dictionary))
-	     (setq ac-sources
-		   '(ac-source-yasnippet
-		     ac-source-dictionary
-		     ;; words in buffer must come after yasnippet,
-		     ;; otherwise same snippet cannot be expanded twice
-		     ac-source-words-in-buffer
-		     ))
-	     (setq ac-ignore-case t)
-	     ))
+	  (lambda ()
+	    (local-set-key (kbd "C-SPC") 'auto-complete)
+	    (setq ac-user-dictionary ())
+	    (dolist (x js2-default-externs)
+	      (push x ac-user-dictionary))
+	    (setq ac-sources
+		  '(ac-source-yasnippet
+		    ac-source-dictionary
+		    ;; Words in buffer must come after yasnippet,
+		    ;; otherwise same snippet cannot be expanded twice
+		    ac-source-words-in-buffer
+		    ))
+	    (setq ac-ignore-case t)
+	    );;lambda
+	  );;add-hook
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; yasnippet
 ;; See https://github.com/capitaomorte/yasnippet
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'yasnippet)
+(setq yas/root-directory (concat idmacs-emacs-dir "/etc/idmacs/snippets"))
 (yas-reload-all)
 (add-hook 'js2-mode-hook
-	   (lambda ()
-	     (yas-minor-mode)
-	     (local-set-key (kbd "C-M-SPC") 'yas-exit-snippet)
-	     ))
+	  (lambda ()
+	    (yas-minor-mode)
+	    (local-set-key (kbd "C-M-SPC") 'yas-exit-snippet)
+	    ))
 (setq yas-triggers-in-field t)

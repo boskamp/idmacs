@@ -500,5 +500,8 @@ rem * nothing
 rem ******************************************************************
 :sub_trace
 setlocal
+
 echo %* >>!gv_trace_file!
+
 endlocal
+goto :eof

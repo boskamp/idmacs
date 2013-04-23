@@ -38,7 +38,7 @@ set gv_cmd_server="%~dp0runemacs.exe"
 call :sub_trace gv_cmd_server=!gv_cmd_server!
 
 rem Command line to start Emacs client with
-set gv_cmd_client="%~dp0emacsclient.exe" "%*"
+set gv_cmd_client="%~dp0emacsclient.exe" %*
 call :sub_trace gv_cmd_client=!gv_cmd_client!
 
 set /a "gv_num_attempts=-1"
@@ -68,7 +68,7 @@ if not exist "!gv_server_file!" (
         if !gv_num_attempts! lss 10 (
             call :sub_trace ^
                  Server not reached on attempt #!gv_num_attempts!
-            !gv_sleep_cmd! 1
+            !gv_sleep_cmd! 1 >nul 2>&1
 	    set gv_loop_again=true
         ) else (
             echo ERROR: Giving up after !gv_num_attempts! attempts

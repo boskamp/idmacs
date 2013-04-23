@@ -27,19 +27,17 @@
  * them.
  *
  * Parameters:
- *   iv_snippets_dir - directory path as strig in which to create dictionary
+ *   iv_dictionary_file - name of dictionary file as string
  *
  * Returns:
  *   nothing
  */
-function idmacs_builtins_create_dictionary(iv_snippets_dir) {
+function idmacs_builtins_create_dictionary(iv_dictionary_file) {
     var LC_SCRIPT = "idmacs_builtins_create_dictionary: ";
-    idmacs_trace(LC_SCRIPT + "iv_snippets_dir = " + iv_snippets_dir);
+    idmacs_trace(LC_SCRIPT + "iv_dictionary_file = " + iv_dictionary_file);
     
-    var lo_dictionary_dir
-	    = new java.io.File(iv_snippets_dir);
     var lo_dictionary_file
-	    = new java.io.File(lo_dictionary_dir, "js2-mode");
+	    = new java.io.File(iv_dictionary_file);
     var lo_dictionary_fos
 	    = new java.io.FileOutputStream(lo_dictionary_file);
     var lo_dictionary_writer

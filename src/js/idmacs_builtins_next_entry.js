@@ -32,9 +32,8 @@
  *         Value: Directory path as string where to create snippet files;
  *                will be created if it doesn't exist yet
  *
- *         Key:   DICTIONARY_DIR
- *         Value: Directory path as string where to create dictionary file;
- *                will be created if it doesn't exist yet
+ *         Key:   DICTIONARY_FILE
+ *         Value: File name of dictionary file as string
  *
  *         Key:   HELP_FILE
  *         Value: Name of file into which the built-in function descriptions
@@ -52,11 +51,10 @@ function idmacs_builtins_next_entry(Par){
 
     // Create/verify all required directories
     var lv_snippets_dir = Par.get("SNIPPETS_DIR");
-    var lv_dictionary_dir = Par.get("DICTIONARY_DIR");
+    var lv_dictionary_file = Par.get("DICTIONARY_FILE");
 
     var lo_dirs = new java.util.HashMap();
     lo_dirs.put("DIR0", lv_snippets_dir);
-    lo_dirs.put("DIR1", lv_dictionary_dir);
     idmacs_mkdirs(lo_dirs);
 
     // Read help file content into global variable gv_help
@@ -118,7 +116,7 @@ function idmacs_builtins_next_entry(Par){
     }// while (lo_help_matcher.find())
 
     // Create dictionary file containing all function names
-    idmacs_builtins_create_dictionary(lv_dictionary_dir);
+    idmacs_builtins_create_dictionary(lv_dictionary_file);
 
     idmacs_trace("Total number of functions successfully parsed: "
                  + lv_match_number);

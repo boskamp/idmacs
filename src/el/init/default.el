@@ -16,8 +16,15 @@
 ;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with IDMacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;; First of all, start the server
 (server-start)
+
+;; Put Emacs installation directory from environment into global variable
 (setq idmacs-emacs-dir (getenv "emacs_dir"))
+
+;; Don't show Emacs startup screen
+(setq inhibit-startup-screen t)
 
 (defun idmacs-activate ()
   "Save current buffer and return to MMC"
@@ -57,10 +64,9 @@
 (defun idmacs-js2-declare-builtins ()
   "Make all IDM built-in function names declared in js2-mode"
   (interactive)
-  (setq debug-on-quit t)
   (setq js2-global-externs nil)
   (let ((builtins-dict-file 
-	 (concat idmacs-emacs-dir "/etc/idmacs/dict/builtins/js2-mode")))
+	 (concat idmacs-emacs-dir "/etc/idmacs/dict/builtins.dic")))
     (if (file-exists-p builtins-dict-file)
 	(save-excursion
 	  (with-temp-buffer 
@@ -166,20 +172,23 @@
 
 (let ((idmacs-dir-dict (concat idmacs-emacs-dir "/etc/idmacs/dict/")))
   (add-to-list 
-   'ac-dictionary-directories 
-   (concat idmacs-dir-dict "tables"))
+   'ac-user-dictionary-files
+   (concat idmacs-dir-dict "tables.dic"))
 
   (add-to-list 
-   'ac-dictionary-directories 
-   (concat idmacs-dir-dict "views"))
+   'ac-user-dictionary-files
+   (concat idmacs-dir-dict "views.dic"))
 
   (add-to-list 
-   'ac-dictionary-directories 
-   (concat idmacs-dir-dict "attributes"))
+   'ac-user-dictionary-files
+   (concat idmacs-dir-dict "attributes.dic"))
 
-  (add-to-list 
-   'ac-dictionary-directories 
-   (concat idmacs-dir-dict "builtins"))
+  ;; Never add below file; it's not be processed by auto-complete
+  ;; directly, but instead used to populate js2-global-externs.
+  ;; See function idm-js2-declare-builtins
+  ;; (add-to-list 
+  ;;  'ac-user-dictionary-files
+  ;;  (concat idmacs-dir-dict "builtins.dic"))
 
   );;let
 

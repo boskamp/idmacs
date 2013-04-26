@@ -98,10 +98,12 @@
 ;; Always show column numbers
 (setq column-number-mode t)
 
-;; Don't show the startup screen
-;;(setq inhibit-startup-screen t)
 ;; Use Windows-like keybindings for copy&paste, undo and select
-(cua-mode t)
+;; I'm currently not enabling this by default because it changes
+;; the behavior of how the mark can be used while searching.
+;; You can enable it on a per user basis if you're unfamiliar
+;; with basic Emacs editing commands.
+;;(cua-mode t)
 
 ;; Line comment also empty lines
 (setq comment-empty-lines t)
@@ -112,6 +114,8 @@
 ;; Always highlight matching parens
 (show-paren-mode t)
 
+;; TODO: Electric layout mode needs more exploration on my behalf
+;; until it can be enabled for production.
 ;; (electric-layout-mode)
 ;; (setq electric-layout-rules '(?\{ . after))
 
@@ -119,6 +123,40 @@
 (electric-indent-mode t)
 (electric-pair-mode t)
 (setq electric-pair-skip-self t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Global keybindings
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Must rebind set-mark-command because it conflits with
+;; completion in js2-mode
+(global-set-key
+    (kbd "C-M-SPC")
+    'set-mark-command)
+
+   ;; Poor man's Pretty Print: indent whole buffer
+   (global-set-key
+    (kbd "<S-f1>")
+    'idmacs-pretty-print)
+
+   ;; Poor man's Compile: move to next error/warning
+   (global-set-key
+    (kbd "<C-f2>")
+    'next-error)
+
+   ;; Poor main's Activate: save buffer, then quit
+   (global-set-key
+    (kbd "<C-f3>")
+    'idmacs-activate)
+
+   ;; Poor main's Activate: save buffer, then quit
+   (global-set-key
+    (kbd "<C-f12>")
+    'idmacs-quit)
+
+   ;; Toggle line comment
+   (global-set-key
+    (kbd "C-/")
+    'idmacs-toggle-line-comment)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; js2-mode (mooz fork)
@@ -133,31 +171,6 @@
 (add-hook
  'js2-mode-hook
  (lambda()
-   ;; Poor man's Pretty Print: indent whole buffer
-   (local-set-key
-    (kbd "<S-f1>")
-    'idmacs-pretty-print)
-
-   ;; Poor man's Compile: move to next error/warning
-   (local-set-key
-    (kbd "<C-f2>")
-    'next-error)
-
-   ;; Poor main's Activate: save buffer, then quit
-   (local-set-key
-    (kbd "<C-f3>")
-    'idmacs-activate)
-
-   ;; Poor main's Activate: save buffer, then quit
-   (local-set-key
-    (kbd "<C-f12>")
-    'idmacs-quit)
-
-   ;; Toggle line comment
-   (local-set-key
-    (kbd "C-/")
-    'idmacs-toggle-line-comment)
-
    ;; Create concatenated multiline strings on RET
    (local-set-key
     (kbd "RET")
@@ -222,9 +235,4 @@
 (require 'yasnippet)
 (setq yas/root-directory (concat idmacs-emacs-dir "/etc/idmacs/snippets"))
 (yas-reload-all)
-(add-hook 'js2-mode-hook
-	  (lambda ()
-	    (yas-minor-mode)
-	    (local-set-key (kbd "C-M-SPC") 'yas-exit-snippet)
-	    ))
 (setq yas-triggers-in-field t)

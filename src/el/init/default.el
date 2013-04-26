@@ -50,13 +50,13 @@
 ;; Credits to stackoverflow.com user ExplodingRat
 ;; http://stackoverflow.com/questions/9688748/emacs-comment-uncomment-current-line
 (defun idmacs-toggle-line-comment ()
-    "Comments or uncomments the region or the current line if there's no active region."
-    (interactive)
-    (let (beg end)
-        (if (region-active-p)
-            (setq beg (region-beginning) end (region-end))
-	  (setq beg (line-beginning-position) end (line-end-position)))
-        (comment-or-uncomment-region beg end)))
+  "Comments or uncomments the region or the current line if there's no active region."
+  (interactive)
+  (let (beg end)
+    (if (region-active-p)
+        (setq beg (region-beginning) end (region-end))
+      (setq beg (line-beginning-position) end (line-end-position)))
+    (comment-or-uncomment-region beg end)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Add all IDM internal functions to js2-additional-externs
@@ -65,23 +65,23 @@
   "Make all IDM built-in function names declared in js2-mode"
   (interactive)
   (setq js2-global-externs nil)
-  (let ((builtins-dict-file 
-	 (concat idmacs-emacs-dir "/etc/idmacs/dict/builtins.dic")))
+  (let ((builtins-dict-file
+         (concat idmacs-emacs-dir "/etc/idmacs/dict/builtins.dic")))
     (if (file-exists-p builtins-dict-file)
-	(save-excursion
-	  (with-temp-buffer 
-	    (goto-char (point-min))
-	    (insert-file-contents builtins-dict-file)
-	    ;; Using "^.*$" instead of "^.+$" results in endless loop,
-	    ;; so search for non-empty lines only
-	    (while (re-search-forward "^.+$" (point-max) t)
-	      (let ((func-name (match-string 0)))
-		(push func-name js2-global-externs)
-		(message "Declared %s" func-name)
-		);;let
-	      );;while
-	    );;with-temp-buffer
-	  );;save-excursion
+        (save-excursion
+          (with-temp-buffer
+            (goto-char (point-min))
+            (insert-file-contents builtins-dict-file)
+            ;; Using "^.*$" instead of "^.+$" results in endless loop,
+            ;; so search for non-empty lines only
+            (while (re-search-forward "^.+$" (point-max) t)
+              (let ((func-name (match-string 0)))
+                (push func-name js2-global-externs)
+                (message "Declared %s" func-name)
+                );;let
+              );;while
+            );;with-temp-buffer
+          );;save-excursion
       );;if
     );;let
   );;defun
@@ -130,33 +130,33 @@
 ;; Must rebind set-mark-command because it conflits with
 ;; completion in js2-mode
 (global-set-key
-    (kbd "C-M-SPC")
-    'set-mark-command)
+ (kbd "C-M-SPC")
+ 'set-mark-command)
 
-   ;; Poor man's Pretty Print: indent whole buffer
-   (global-set-key
-    (kbd "<S-f1>")
-    'idmacs-pretty-print)
+;; Poor man's Pretty Print: indent whole buffer
+(global-set-key
+ (kbd "<S-f1>")
+ 'idmacs-pretty-print)
 
-   ;; Poor man's Compile: move to next error/warning
-   (global-set-key
-    (kbd "<C-f2>")
-    'next-error)
+;; Poor man's Compile: move to next error/warning
+(global-set-key
+ (kbd "<C-f2>")
+ 'next-error)
 
-   ;; Poor main's Activate: save buffer, then quit
-   (global-set-key
-    (kbd "<C-f3>")
-    'idmacs-activate)
+;; Poor main's Activate: save buffer, then quit
+(global-set-key
+ (kbd "<C-f3>")
+ 'idmacs-activate)
 
-   ;; Poor main's Activate: save buffer, then quit
-   (global-set-key
-    (kbd "<C-f12>")
-    'idmacs-quit)
+;; Poor main's Activate: save buffer, then quit
+(global-set-key
+ (kbd "<C-f12>")
+ 'idmacs-quit)
 
-   ;; Toggle line comment
-   (global-set-key
-    (kbd "C-/")
-    'idmacs-toggle-line-comment)
+;; Toggle line comment
+(global-set-key
+ (kbd "C-/")
+ 'idmacs-toggle-line-comment)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; js2-mode (mooz fork)
@@ -164,8 +164,8 @@
 (autoload 'js2-mode "js2-mode" nil t)
 
 (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
-; SAP IDM always uses .vbs as a script file extension,
-; even for JavaScript. Load js2-mode also for .vbs files.
+                                        ; SAP IDM always uses .vbs as a script file extension,
+                                        ; even for JavaScript. Load js2-mode also for .vbs files.
 (add-to-list 'auto-mode-alist '("\\.vbs$" . js2-mode))
 
 (add-hook
@@ -184,22 +184,22 @@
 (require 'auto-complete-config)
 
 (let ((idmacs-dir-dict (concat idmacs-emacs-dir "/etc/idmacs/dict/")))
-  (add-to-list 
+  (add-to-list
    'ac-user-dictionary-files
    (concat idmacs-dir-dict "tables.dic"))
 
-  (add-to-list 
+  (add-to-list
    'ac-user-dictionary-files
    (concat idmacs-dir-dict "views.dic"))
 
-  (add-to-list 
+  (add-to-list
    'ac-user-dictionary-files
    (concat idmacs-dir-dict "attributes.dic"))
 
   ;; Never add below file; it's not be processed by auto-complete
   ;; directly, but instead used to populate js2-global-externs.
   ;; See function idm-js2-declare-builtins
-  ;; (add-to-list 
+  ;; (add-to-list
   ;;  'ac-user-dictionary-files
   ;;  (concat idmacs-dir-dict "builtins.dic"))
 
@@ -212,21 +212,21 @@
 (setq ac-auto-start 6)
 
 (add-hook 'js2-mode-hook
-	  (lambda ()
-	    (local-set-key (kbd "C-SPC") 'auto-complete)
-	    (setq ac-user-dictionary ())
-	    (dolist (x js2-default-externs)
-	      (push x ac-user-dictionary))
-	    (setq ac-sources
-		  '(ac-source-yasnippet
-		    ac-source-dictionary
-		    ;; Words in buffer must come after yasnippet,
-		    ;; otherwise same snippet cannot be expanded twice
-		    ac-source-words-in-buffer
-		    ))
-	    (setq ac-ignore-case t)
-	    );;lambda
-	  );;add-hook
+          (lambda ()
+            (local-set-key (kbd "C-SPC") 'auto-complete)
+            (setq ac-user-dictionary ())
+            (dolist (x js2-default-externs)
+              (push x ac-user-dictionary))
+            (setq ac-sources
+                  '(ac-source-yasnippet
+                    ac-source-dictionary
+                    ;; Words in buffer must come after yasnippet,
+                    ;; otherwise same snippet cannot be expanded twice
+                    ac-source-words-in-buffer
+                    ))
+            (setq ac-ignore-case t)
+            );;lambda
+          );;add-hook
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; yasnippet
@@ -236,3 +236,9 @@
 (setq yas/root-directory (concat idmacs-emacs-dir "/etc/idmacs/snippets"))
 (yas-reload-all)
 (setq yas-triggers-in-field t)
+(add-hook 'js2-mode-hook
+          (lambda ()
+	    ;;Enable yasnippet only in js2-mode
+            (yas-minor-mode)
+            );;lambda
+          );;add-hook

@@ -99,11 +99,7 @@
 (setq column-number-mode t)
 
 ;; Use Windows-like keybindings for copy&paste, undo and select
-;; I'm currently not enabling this by default because it changes
-;; the behavior of how the mark can be used while searching.
-;; You can enable it on a per user basis if you're unfamiliar
-;; with basic Emacs editing commands.
-;;(cua-mode t)
+(cua-mode t)
 
 ;; Line comment also empty lines
 (setq comment-empty-lines t)

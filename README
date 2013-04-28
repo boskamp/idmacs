@@ -1,0 +1,105 @@
+IDMacs: GNU Emacs customized for SAP NetWeaver(R) Identity Management
+---------------------------------------------------------------------
+
+
+What is IDMacs?
+---------------
+IDMacs is a customized version of GNU Emacs for Windows, designed
+for use as an external JavaScript editor in SAP NetWeaver(R) Identity
+Management 7.2. The rest of this document assumes that you have
+SAP NetWeaver(R) Identity Management 7.2, specifically the Identity Center
+Management Console, installed on a machine. This machine will be referred
+to as "IC Designtime".
+
+
+Installation
+------------
+* If you have an existing Emacs installation on the IC Designtime,
+carefully read the section 'Important Note for Existing Emacs
+Installations' before proceeding.
+
+* Download a precompiled GNU Emacs, version 24.x, for Windows from http://ftp.gnu.org/gnu/emacs/windows/ The currently recommended download for use with IDMacs is emacs-24.1-bin-i386.zip.
+
+* Extract emacs-24.1-bin-i386.zip to the hard drive of the IC Designtime. The recommended directory is C:\, resulting in a subdirectory C:\emacs-24.1 as Emacs installation directory.
+
+* If you have GIT installed, open a Windows command prompt and enter:
+
+$ git clone https://github.com/boskamp/idmacs.git
+$ cd idmacs
+
+* If don't have GIT, download IDMacs as a ZIP file from https://github.com/boskamp/idmacs. Use the "ZIP" button in the upper left part of the page. Unzip that to the hard drive of the IC designtime. Open a Windows command prompt, and CD into the directory idmacs-master extracted from the ZIP.
+
+* On the command line, enter:
+$ idmacs-install
+
+* When prompted, enter your Emacs installation directory (e.g. C:\emacs-24.1), then press Enter. Press the TAB key one or more times to automatically complete and cycle through directory names you have partially typed in.
+
+* When prompted, confirm that it's OK to overwrite files in your Emacs installation directory by entering the letter y or Y, then press Enter.
+
+* The installer should finish by displaying a message about successful installation on the command line.
+
+* Start the SAP NetWeaver(R) Identity Management Identity Center Management Console (aka MMC). You will need to import and run a job to extract some metadata required for auto-completion.
+
+* Navigate to the "Job folder" underneath the Identity Center configuration.
+
+* It is recommended (but not required), that you create a dedicated folder for IDMacs-related jobs. For example, create a new folder "IDMacs" directly underneath "Job folder".
+
+* Right mouse-click on this folder, and select "Import..." from the context menu.
+
+* In the "Import to Identity Center" file selection dialog, navigate to the subdirectory "etc\idmacs\job" underneath your Emacs installation directory. if you followed the recommendations, this will be "C:\emacs-24.1\etc\idmacs\job".
+
+* Select the file idmacs_job_export_sap_idm_symbols.mcc, and press OK.
+
+* Press the "Next", button, then "Import".
+
+* TODO: run job
+
+* TODO: set as external script editor
+
+
+Reporting Bugs
+--------------
+TODO
+
+
+IDMacs Keybindings
+------------------
+TODO
+
+
+Important Note for Existing Emacs Installations
+-----------------------------------------------
+IDMacs is designed as an overlay for an existing GNU Emacs installation
+on Windows. It may OVERWRITE files of this Emacs installation and
+thereby result in LOSS of existing customizations and modifications
+you may already have applied to Emacs on your own. If you have an
+existing Emacs installation on the IC Designtime, I therefore strongly
+recommend that you install an additional Emacs instance,
+dedicated for use with IDMacs.
+
+
+Contact Information
+-------------------
+Author: Lambert Boskamp <lambert@boskamp-consulting.com.nospam>
+
+
+Copyright and License Information
+---------------------------------
+Copyright (C) 2013 Lambert Boskamp
+
+SAP NetWeaver(R) Identity Management and SAP NetWeaver(R) ID Management are the trademark(s) or registered trademark(s) of SAP AG in Germany and in several other countries.
+
+This file is part of IDMacs.
+
+IDMacs is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+IDMacs is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with IDMacs.  If not, see <http://www.gnu.org/licenses/>.

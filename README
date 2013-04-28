@@ -30,31 +30,30 @@ $ cd idmacs
 * If don't have GIT, download IDMacs as a ZIP file from https://github.com/boskamp/idmacs. Use the "ZIP" button in the upper left part of the page. Unzip that to the hard drive of the IC designtime. Open a Windows command prompt, and CD into the directory idmacs-master extracted from the ZIP.
 
 * On the command line, enter:
-$ idmacs-install
 
-* When prompted, enter your Emacs installation directory (e.g. C:\emacs-24.1), then press Enter. Press the TAB key one or more times to automatically complete and cycle through directory names you have partially typed in.
+$ idmacs_install
 
-* When prompted, confirm that it's OK to overwrite files in your Emacs installation directory by entering the letter y or Y, then press Enter.
+* Follow the on-screen insttructions. When prompted, enter your Emacs installation directory (e.g. C:\emacs-24.1), then press Enter. Press the TAB key one or more times to automatically complete and cycle through directory names you have partially typed in.
 
-* The installer should finish by displaying a message about successful installation on the command line.
+* Start the SAP NetWeaver(R) Identity Management Identity Center Management Console. It will be referred to as "MMC" throughout the rest of the document.
 
-* Start the SAP NetWeaver(R) Identity Management Identity Center Management Console (aka MMC). You will need to import and run a job to extract some metadata required for auto-completion.
+* [optional] Create a job folder for IDMacs jobs. Navigate to the "Job folder" underneath the Identity Center configuration. Create a new folder "IDMacs" directly underneath "Job folder".
 
-* Navigate to the "Job folder" underneath the Identity Center configuration.
+* Import the job "etc\idmacs\job\idmacs_job_export_sap_idm_symbols.mcc" located underneath your Emacs installation directory. Right mouse-click on the job folder you just created, and select "Import..." from the context menu. Navigate to the subdirectory "etc\idmacs\job" underneath your Emacs installation directory. If you followed the recommendations, this will be "C:\emacs-24.1\etc\idmacs\job". Select the file idmacs_job_export_sap_idm_symbols.mcc, and press OK. Press the "Next" button, then "Import". Depending on which database you're using, the import may result in a warning message stating that the job was exported from a different database platform than what you're using. That's OK, no problem. Press "Finish". You should now have a new job "Export SAP IDM Symbols" underneath the folder you started from.
 
-* It is recommended (but not required), that you create a dedicated folder for IDMacs-related jobs. For example, create a new folder "IDMacs" directly underneath "Job folder".
+* Verify that the job constant IDMACS_EMACS_DIR is set to the correct Emacs installation directory. Expand the new node "Export SAP IDM Symbols" in the MMC tree control, and select "Job constants". If the value displayed next to "IDMACS_EMACS_DIR" does not match your Emacs installation directory, double-click the constant name to change the constant's value. Specify the correct directory in the input field "Value:", then press the "OK" button.
 
-* Right mouse-click on this folder, and select "Import..." from the context menu.
+* Verify that the job is enabled. In the MMC tree control, select the node "Export SAP IDM Symbols". This will display the job details. On the "Options" tab of the job details, verify that the property "Enabled" is true (checkbox in state "checked"). If it is not, set it to true now and press the "Apply" button.
 
-* In the "Import to Identity Center" file selection dialog, navigate to the subdirectory "etc\idmacs\job" underneath your Emacs installation directory. if you followed the recommendations, this will be "C:\emacs-24.1\etc\idmacs\job".
+* Verify that the job is assigned to a dispatcher. Still on the "Options" tab of the job details, verify that the job is assigned to a dispatcher. In the section "Dispatchers", verify that the property "Run by dispatchers:" is true (checkbox in state "checked") for at least one of your dispatchers. If the job is not currently assigned to any dispatcher, assign it to one of your dispatchers by ticking the checkbox next to the dispatcher name, then press the "Apply" button.
 
-* Select the file idmacs_job_export_sap_idm_symbols.mcc, and press OK.
+* Execute the job. Still on the "Options" tab of the job details, press the "Run now" button in the "Scheduling section". Execution will take less than 5 seconds on typical server hardware. If no job log is displayed, make sure that the dispatcher you assigned the job to is up and running.
 
-* Press the "Next", button, then "Import".
+* Verify actual job execution from the job logs. In the MMC tree control, select "Job log" underneath "Export SAP IDM Symbols" to display the logs of this job.  You may need to press the "Refresh" button a couple of times. 
 
-* TODO: run job
+* Check for errors in the job log. Still in the job log display, verify that the job finished without any error messages. A successful job execution will produce a couple of warnings in the log, which are related to skipping database vendor-specific passes that are not applicable to your installation.  
 
-* TODO: set as external script editor
+* [optional] Set "bin\idmacs.cmd" located underneath your Emacs installation directory as your script editor. From the MMC menu, select "Tools" -> "Options". Press the ellipsis button (...) next to the input field "Script editor:". In the file selection dialog, navigate to the subdirectory "bin" of your Emacs installation directory. Change the "Files of type:" dropdown to "All files (*.*)", then select the file idmacs.cmd and press the "Open" button. Press "OK" in the "Options" dialog.
 
 
 Reporting Bugs

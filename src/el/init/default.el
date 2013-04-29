@@ -46,6 +46,7 @@
   (delete-trailing-whitespace)
   (indent-region (point-min) (point-max) nil)
   (untabify (point-min) (point-max))
+  (message "Pretty print executed")
   )
 ;; Credits to stackoverflow.com user ExplodingRat
 ;; http://stackoverflow.com/questions/9688748/emacs-comment-uncomment-current-line
@@ -139,14 +140,14 @@
  (kbd "<C-f2>")
  'next-error)
 
-;; Poor main's Activate: save buffer, then quit
+;; Poor man's Activate: save and quit
 (global-set-key
  (kbd "<C-f3>")
  'idmacs-activate)
 
-;; Poor main's Activate: save buffer, then quit
+;; Quit (without saving)
 (global-set-key
- (kbd "<C-f12>")
+ (kbd "<C-f4>")
  'idmacs-quit)
 
 ;; Toggle line comment

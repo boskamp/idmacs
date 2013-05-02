@@ -33,7 +33,7 @@ $ cd idmacs
 
 $ idmacs_install
 
-* Follow the on-screen insttructions. When prompted, enter your Emacs installation directory (e.g. C:\emacs-24.1), then press Enter. Press the TAB key one or more times to automatically complete and cycle through directory names you have partially typed in.
+* Follow the on-screen instructions. When prompted, enter your Emacs installation directory (e.g. C:\emacs-24.1), then press Enter. Press the TAB key one or more times to automatically complete and cycle through directory names you have partially typed in.
 
 * Start the SAP NetWeaver(R) Identity Management Identity Center Management Console. It will be referred to as "MMC" throughout the rest of the document.
 
@@ -58,12 +58,57 @@ $ idmacs_install
 
 Reporting Bugs
 --------------
-TODO
+If you have problems with IDMacs, please follow the below guidelines to file a bug report. Although I will try my best to support you with the software, please understand that this is a non-profit activity that I cannot always focus on. Consquently, I will not always have the time to respond to your bug reports in a timely manner.
+
+Please use the issue tracker at 
+
+https://github.com/boskamp/idmacs/issues 
+
+to report any problems with IDMacs. Provide a short, yet concise textual description of your problem, and add screenshots whereever it could help illustrating what exactly is happening.
+
+Make sure to include the following key information:
+
+1. Which version of IDMacs are you using? Open a command prompt, CD into the directory where you extracted the IDMacs sources into, and enter the following command:
+
+$ git log -1
+
+Copy and paste the complete output of this command into your bug description.
+
+2. For problems during installation (idmacs_install.cmd):
+Repeat the installation with the --debug command line option like so:
+
+$ idmacs_install --debug
+
+This will create a developer trace file dev_idmacs_install in the current working directory. Copy and paste its contents into your bug description.
+
+3. For problems during startup of the editor (idmacs.cmd):
+
+Find the developer trace file dev_idmacs in the "bin" subdirectory of your Emacs installation directory. Copy and paste its contents into the your bug description.
+
+4. For problems during execution of the job "Export SAP IDM Symbols":
+
+Copy and paste the job log into your bug description. In the MMC tree control, select the node "Job log" underneath the job. In the "Log information" pane, double click the line that corresponds to the job run that made trouble (typically the most recent one, displayed at the top). In the HTML job log that is displayed, use the context menu to "Select all", then "Copy". Now paste that into the issue description form at GitHub.
 
 
 IDMacs Keybindings
 ------------------
-TODO
+A comprehensive documentation of general Emacs keybindings is provided in the document "etc\refcards\refcard.pdf" underneath your Emacs installation directory.
+
+The following additional keybindings are specific to IDMacs:
+
+Shift - F1        Pretty print
+Ctrl  - F2        Syntax check
+Ctrl  - F3        Save & quit
+Ctrl  - F4        Quit
+Ctrl  - Enter     Auto complete
+Ctrl  - /         Toggle line comment
+
+In addition, IDMacs enables the following standard Windows keybindings:
+
+Ctrl  - c         Copy
+Ctrl  - x         Cut
+Ctrl  - v         Paste
+Ctrl  - z         Undo
 
 
 Important Note for Existing Emacs Installations

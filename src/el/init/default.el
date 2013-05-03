@@ -87,8 +87,33 @@
     );;let
   );;defun
 
-;; Always show file name in frame title
-(setq frame-title-format "%b")
+;; In js2-mode, show a frame title "SCRIPT: ", followed
+;; by the script file name without extension. The rationale
+;; is that MMC always uses file names with a .vbs extension,
+;; which might confuse end users. In all other major modes,
+;; show the full file name including extension.
+(add-hook
+ 'window-configuration-change-hook
+ (lambda ()
+   (if (equal major-mode 'js2-mode) 
+       (setq 
+	frame-title-format
+	;; list is required to flatten the sub-lists
+	;; see http://www.emacswiki.org/emacs/FrameTitle
+	(list "SCRIPT:    "
+	      (file-name-nondirectory 
+	       (file-name-sans-extension buffer-file-name)
+	       )
+	      );;list
+        );;setq
+     (setq frame-title-format '("%b"))
+     );;if
+
+   ;; this is required to actually refresh the frame title
+   (force-mode-line-update)
+   
+   );;lambda
+ );;add-hook
 
 ;; Never require yes or no style answers
 (defalias 'yes-or-no-p 'y-or-n-p)

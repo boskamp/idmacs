@@ -18,7 +18,7 @@
 // along with IDMacs.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Checks whether the current database platform is Oracle.
+ * Checks whether the current database platform is IBM DB2.
  * If so, skips execution of the current pass.
  *
  * Parameters:
@@ -27,17 +27,17 @@
  * Returns:
  *   nothing
  */
-function idmacs_skip_if_not_ora(){
-	var SCRIPT = "idmacs_skip_if_not_ora: ";
+function idmacs_skip_if_not_db2(){
+	var SCRIPT = "idmacs_skip_if_not_db2: ";
 
 	var lv_dbtype = "%$ddm.databasetype%";
 	idmacs_trace(SCRIPT + "lv_dbtype = " + lv_dbtype);
 
-	//If database type is not ORA
-	if(lv_dbtype != "2")
+	//If database type is not DB2
+	if(lv_dbtype != "5")
 	{
 		//Skip this pass
 		uSkip(2);
 	}
 	return;
-}//idmacs_skip_if_not_ora
+}//idmacs_skip_if_not_db2

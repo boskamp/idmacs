@@ -100,7 +100,7 @@ Shift - F1        Pretty print
 Ctrl  - F2        Syntax check
 Ctrl  - F3        Save & quit
 Ctrl  - F4        Quit
-Ctrl  - Enter     Auto complete
+Ctrl  - Space     Auto complete
 Ctrl  - /         Toggle line comment
 
 In addition, IDMacs enables the following standard Windows keybindings:

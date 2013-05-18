@@ -60,7 +60,7 @@
     (comment-or-uncomment-region beg end)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Add all IDM internal functions to js2-additional-externs
+;; Add all IDM internal functions to js2-global-externs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun idmacs-js2-declare-builtins ()
   "Make all IDM built-in function names declared in js2-mode"
@@ -86,6 +86,43 @@
       );;if
     );;let
   );;defun
+
+(defun idmacs-apidoc ()
+  "Launch API documentation in external browser"
+  (interactive)
+  (let ((l-regex "[a-zA-Z0-9_]+")
+	(l-match-start)
+	(l-match-end)
+	(l-match)
+	(l-url))
+    (if (looking-back l-regex 0 t)
+	(setq l-match-start (match-string 0)))
+    (if (looking-at l-regex)
+	(setq l-match-end (match-string 0)))
+    ;;concat will return "" even when both are nil
+    (setq l-match (concat l-match-start l-match-end))
+    ;;(message "l-match=%s" l-match)
+    (if (not (member l-match js2-global-externs))
+	(message "No API doc available")
+
+      ;;else
+      (setq l-url (concat "http://help.sap.com"
+			  "/saphelp_nwidmic72"
+			  "/en"
+			  "/using_functions"
+			  "/internal_functions"
+			  "/dse_" 
+			  (downcase l-match)
+			  ".htm"))
+      ;;TODO: this requires confirmation of killing
+      ;;active processes on exit. How to kill the
+      ;;remaining cmd.exe(s) automatically?
+      (start-process "idmacs_apidoc" ;;process name
+		     (get-buffer-create "*idmacs_apidoc*") ;;buffer
+		     "cmd.exe"       ;;program
+		     "/k"            ;;args...
+		     "start"
+		     l-url))))
 
 ;; In js2-mode, show a frame title "SCRIPT: ", followed
 ;; by the script file name without extension. The rationale
@@ -164,6 +201,11 @@
 (global-set-key
  (kbd "<C-f2>")
  'next-error)
+
+;; Launch API doc in external browser
+(global-set-key
+ (kbd "<S-f2>")
+ 'idmacs-apidoc)
 
 ;; Poor man's Activate: save and quit
 (global-set-key

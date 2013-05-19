@@ -1,4 +1,4 @@
-;; Copyright 2013 Lambert Boskamp
+; Copyright 2013 Lambert Boskamp
 ;;
 ;; Author: Lambert Boskamp <lambert@boskamp-consulting.com.nospam>
 ;;
@@ -16,6 +16,16 @@
 ;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with IDMacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;; TODO: Make this a customizable variable
+;; See http://www.gnu.org/software/emacs/manual/html_node/elisp/Variable-Definitions.html
+(setq idmacs-help-base "its:c:/usr/sap/idm/identity center/dse.chm::")
+
+;; (setq idmacs-help-base (concat "http://help.sap.com"
+;; 			       "/saphelp_nwidmic72"
+;; 			       "/en"))
+
+;;<<<TODO
 
 ;; First of all, start the server
 (server-start)
@@ -99,30 +109,24 @@
 	(setq l-match-start (match-string 0)))
     (if (looking-at l-regex)
 	(setq l-match-end (match-string 0)))
+
     ;;concat will return "" even when both are nil
     (setq l-match (concat l-match-start l-match-end))
-    ;;(message "l-match=%s" l-match)
+
     (if (not (member l-match js2-global-externs))
-	(message "No API doc available")
+	(message "No API doc available for \"%s\"" l-match)
 
       ;;else
-      (setq l-url (concat "http://help.sap.com"
-			  "/saphelp_nwidmic72"
-			  "/en"
+      (setq l-url (concat idmacs-help-base
 			  "/using_functions"
 			  "/internal_functions"
 			  "/dse_" 
 			  (downcase l-match)
 			  ".htm"))
-      ;;TODO: this requires confirmation of killing
-      ;;active processes on exit. How to kill the
-      ;;remaining cmd.exe(s) automatically?
-      (start-process "idmacs_apidoc" ;;process name
-		     (get-buffer-create "*idmacs_apidoc*") ;;buffer
-		     "cmd.exe"       ;;program
-		     "/k"            ;;args...
-		     "start"
-		     l-url))))
+
+      (message "Displaying API doc for \"%s\"" l-match)
+      ;;(w32-shell-execute nil l-url))))
+      (browse-url l-url))))
 
 ;; In js2-mode, show a frame title "SCRIPT: ", followed
 ;; by the script file name without extension. The rationale

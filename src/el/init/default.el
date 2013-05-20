@@ -21,7 +21,7 @@
 (server-start)
 
 (defgroup idmacs nil
-  "Customizations for SAP NetWeaver(R) Identity Management"
+  "JavaScript for SAP NetWeaver(R) Identity Management"
   :group 'tools
   :tag "IDMacs")
 
@@ -118,7 +118,11 @@
 	(message "No API doc available for \"%s\"" l-match)
 
       ;;else
-      (if (file-exists-p idmacs-help-file)
+      (if (and (> (length idmacs-help-file) 0)
+	       ;; The file existence check returns t
+	       ;; for empty strings(!?), so we must also
+	       ;; check for zero length above
+	       (file-exists-p idmacs-help-file))
 	  (setq l-url-base
 		(concat "its:"
 			idmacs-help-file

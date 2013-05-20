@@ -17,18 +17,18 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with IDMacs.  If not, see <http://www.gnu.org/licenses/>.
 
-;; TODO: Make this a customizable variable
-;; See http://www.gnu.org/software/emacs/manual/html_node/elisp/Variable-Definitions.html
-(setq idmacs-help-base "its:c:/usr/sap/idm/identity center/dse.chm::")
-
-;; (setq idmacs-help-base (concat "http://help.sap.com"
-;; 			       "/saphelp_nwidmic72"
-;; 			       "/en"))
-
-;;<<<TODO
-
 ;; First of all, start the server
 (server-start)
+
+(defgroup idmacs nil
+  "Customizations for SAP NetWeaver(R) Identity Management"
+  :group 'tools
+  :tag "IDMacs")
+
+(defcustom idmacs-help-file ""
+  "Full file name of IdM compiled HTML help file. In a default installation, this is located at C:\\usr\\sap\\IdM\\Identity Management\\dse.chm. If the variable is not set or the file specified here does not exist, `idmacs-apidoc' will look up API documentation from the web instead of from a local help file."
+  :group 'idmacs
+  :type '(file))
 
 ;; Put Emacs installation directory from environment into global variable
 (setq idmacs-emacs-dir (getenv "emacs_dir"))
@@ -104,6 +104,7 @@
 	(l-match-start)
 	(l-match-end)
 	(l-match)
+	(l-url-base)
 	(l-url))
     (if (looking-back l-regex 0 t)
 	(setq l-match-start (match-string 0)))
@@ -117,15 +118,30 @@
 	(message "No API doc available for \"%s\"" l-match)
 
       ;;else
-      (setq l-url (concat idmacs-help-base
+      (if (file-exists-p idmacs-help-file)
+	  (setq l-url-base
+		(concat "its:"
+			idmacs-help-file
+			"::"))
+	;;else
+	(setq l-url-base
+	      (concat "http://help.sap.com"
+		      "/saphelp_nwidmic72"
+		      "/en")))
+      
+      (setq l-url (concat l-url-base
 			  "/using_functions"
 			  "/internal_functions"
 			  "/dse_" 
 			  (downcase l-match)
 			  ".htm"))
 
+      (message "Using help URL \"%s\"" l-url)
+
       (message "Displaying API doc for \"%s\"" l-match)
-      ;;(w32-shell-execute nil l-url))))
+
+      ;; TODO/open issue: launching Firefox this way puts 
+      ;; it into safe mode after a few times;  not clear why.
       (browse-url l-url))))
 
 ;; In js2-mode, show a frame title "SCRIPT: ", followed

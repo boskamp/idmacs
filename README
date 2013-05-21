@@ -98,6 +98,7 @@ The following additional keybindings are specific to IDMacs:
 
 Shift - F1        Pretty print
 Ctrl  - F2        Syntax check
+Shift - F2        Display API documentation
 Ctrl  - F3        Save & quit
 Ctrl  - F4        Quit
 Ctrl  - Space     Auto complete
@@ -109,6 +110,14 @@ Ctrl  - c         Copy
 Ctrl  - x         Cut
 Ctrl  - v         Paste
 Ctrl  - z         Undo
+
+IDMacs User Options
+-------------------
+All customizable user options are in customization group idmacs. You can go to all user options of this group directly via M-x customize-group RET idmacs RET. Alternatively, you can start browsing customization groups via the menu (Options -> Customize Emacs -> Top-level customization group) and then navigate to Programming -> Languages -> IDMacs.
+
+User option: idmacs-help-value
+------------------------------
+Full file name of IdM compiled HTML help file. In a default installation, this is located at C:\usr\sap\IdM\Identity Center\dse.chm. If the variable is not set or the file specified here does not exist, function idmacs-apidoc (Display API documenation) will look up API documentation from the web instead of from a local help file.
 
 
 Important Note for Existing Emacs Installations

@@ -27,7 +27,7 @@
   :tag "IDMacs")
 
 (defcustom idmacs-help-file ""
-  "Full file name of IdM compiled HTML help file. In a default installation, this is located at C:\\usr\\sap\\IdM\\Identity Management\\dse.chm. If the variable is not set or the file specified here does not exist, `idmacs-apidoc' will look up API documentation from the web instead of from a local help file."
+  "Full file name of IdM compiled HTML help file. In a default installation, this is located at C:\\usr\\sap\\IdM\\Identity Center\\dse.chm. If the variable is not set or the file specified here does not exist, `idmacs-apidoc' will look up API documentation from the web instead of from a local help file."
   :group 'idmacs
   :type '(file))
 

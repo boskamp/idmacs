@@ -22,7 +22,7 @@
 
 (defgroup idmacs nil
   "JavaScript for SAP NetWeaver(R) Identity Management"
-  :group 'tools
+  :group 'languages
   :tag "IDMacs")
 
 (defcustom idmacs-help-file ""

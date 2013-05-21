@@ -20,6 +20,7 @@
 ;; First of all, start the server
 (server-start)
 
+;; Put IDMacs into the Programming -> Languages customization group
 (defgroup idmacs nil
   "JavaScript for SAP NetWeaver(R) Identity Management"
   :group 'languages

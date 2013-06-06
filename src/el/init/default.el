@@ -71,32 +71,38 @@
     (comment-or-uncomment-region beg end)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Add all IDM internal functions to js2-global-externs
+;; Add all IdM internal functions to js2-global-externs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun idmacs-js2-declare-builtins ()
-  "Make all IDM built-in function names declared in js2-mode"
+(defun idmacs-js2-add-externs ()
+  "Make all IdM JavaScript identifiers declared in js2-mode"
   (interactive)
   (setq js2-global-externs nil)
-  (let ((builtins-dict-file
-         (concat idmacs-emacs-dir "/etc/idmacs/dict/builtins.dic")))
-    (if (file-exists-p builtins-dict-file)
-        (save-excursion
-          (with-temp-buffer
-            (goto-char (point-min))
-            (insert-file-contents builtins-dict-file)
-            ;; Using "^.*$" instead of "^.+$" results in endless loop,
-            ;; so search for non-empty lines only
-            (while (re-search-forward "^.+$" (point-max) t)
-              (let ((func-name (match-string 0)))
-                (push func-name js2-global-externs)
-                (message "Declared %s" func-name)
-                );;let
-              );;while
-            );;with-temp-buffer
-          );;save-excursion
-      );;if
-    );;let
-  );;defun
+  (let ((l-dict-dir (concat idmacs-emacs-dir
+			    "/etc"
+			    "/idmacs"
+			    "/dict")))
+    (idmacs-js2-add-externs-from-file (concat l-dict-dir
+					      "/builtins.dic"))
+    (idmacs-js2-add-externs-from-file (concat l-dict-dir
+					      "/global_scripts.dic"))))
+
+(defun idmacs-js2-add-externs-from-file (i-filename)
+  "Add all words from i-filename to js2-global-externs"
+  ;;Interactive code f prompts for an existing file (with completion)
+  (interactive "fDictionary File: ")
+  (if (file-exists-p i-filename)
+      (save-excursion
+	(with-temp-buffer
+	  (goto-char (point-min))
+	  (insert-file-contents i-filename)
+	  ;; Using "^.*$" instead of "^.+$" results in endless loop,
+	  ;; so search for non-empty lines only
+	  (while (re-search-forward "^.+$" (point-max) t)
+	    (let ((func-name (match-string 0)))
+	      (push func-name js2-global-externs)
+	      (message "Declared %s" func-name)))))
+    ;;else
+    (message "File %s does not exist" i-filename)))
 
 (defun idmacs-apidoc ()
   "Launch API documentation in external browser"
@@ -192,8 +198,8 @@
 ;; Line comment also empty lines
 (setq comment-empty-lines t)
 
-;; Load IDM symbols from file and add them to global list of externs
-(idmacs-js2-declare-builtins)
+;; Load IdM symbols from file and add them to global list of externs
+(idmacs-js2-add-externs)
 
 ;; Always highlight matching parens
 (show-paren-mode t)
@@ -253,8 +259,8 @@
 (autoload 'js2-mode "js2-mode" nil t)
 
 (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
-                                        ; SAP IDM always uses .vbs as a script file extension,
-                                        ; even for JavaScript. Load js2-mode also for .vbs files.
+;; SAP IdM always uses .vbs as a script file extension,
+;; even for JavaScript. Load js2-mode also for .vbs files.
 (add-to-list 'auto-mode-alist '("\\.vbs$" . js2-mode))
 
 (add-hook

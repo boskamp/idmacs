@@ -17,6 +17,13 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with IDMacs.  If not, see <http://www.gnu.org/licenses/>.
 
+;; Fix for issue#6
+(defadvice server-ensure-safe-dir (around
+				   idmacs-around-server-ensure-safe-dir
+				   activate)
+  "Ignores any errors raised from server-ensure-safe-dir"
+  (ignore-errors ad-do-it))
+
 ;; First of all, start the server
 (server-start)
 

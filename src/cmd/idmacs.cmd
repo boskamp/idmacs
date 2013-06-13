@@ -20,8 +20,9 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
 
-rem Name of trace file; always located in current working directory
-set gv_trace_file=dev_idmacs
+rem Name of trace file; always located in same dir as idmacs.cmd.
+rem Note that %~dp0 includes the trailing backslash; fixes issue#2
+set gv_trace_file=%~dp0dev_idmacs
 
 rem Truncate trace file
 echo( >!gv_trace_file!
@@ -130,15 +131,64 @@ set lv_return=
 rem Invoking a new shell with /c will return the errorlevel
 rem from the command executed
 
+rem ************************************************************
+rem Try CMD builtin command sleep (W2K3)
+rem ************************************************************
 cmd /c "sleep /? >nul 2>&1"
 
-if errorlevel 1 (
-    set lv_errorlevel=!errorlevel!
-    set lv_return=timeout /t
-    call :sub_trace Trying to SLEEP returned errorlevel !lv_errorlevel!
-) else (
+if %errorlevel% equ 0 (
     set lv_return=sleep
-    call :sub_trace SLEEPing works fine on this machine
+    call :sub_trace This system has sleep as a builtin Windows command
+) else (
+    set lv_errorlevel=!errorlevel!
+    call :sub_trace ^
+         Trying CMD builtin sleep returned errorlevel !lv_errorlevel!
+)
+
+rem ************************************************************
+rem Try Cygwin sleep.exe from GNU Coreutils. Depending on the
+rem system's PATH, this may take precedence before the Windows
+rem CMD builtin sleep. Since GNU sleep doesn't accept the /?
+rem option, our test above will fail for that.
+rem ************************************************************
+if "!lv_return!" == "" (
+    cmd /c "sleep --help >nul 2>&1"
+
+    if %errorlevel% equ 0 (
+        set lv_return=sleep
+        call :sub_trace This system has GNU sleep
+    ) else (
+        set lv_errorlevel=!errorlevel!
+        call :sub_trace ^
+             Trying GNU sleep returned errorlevel !lv_errorlevel!
+    )
+)
+
+rem ************************************************************
+rem Try CMD builtin command timeout /t (W2K8 and above)
+rem Note that if have Cygwin, we also have GNU timeout,
+rem which always seems to return 0, even when an illegal argument
+rem like /? is supplied. Trying to use GNU timeout /t, however,
+rem doesn't work. So this last test will give a wrong result
+rem on systems where Cygwin is installed and comes before cmd.exe
+rem in the PATH.
+rem 
+rem To work around this problem, the test for GNU timeout is executed
+rem AFTER the test for GNU sleep. If we have Cygwin, the GNU sleep
+rem test above will have succeeded and lv_return is already filled,
+rem so this final test is never executed.
+rem ************************************************************
+if "!lv_return!" == "" (
+    cmd /c "timeout /? >nul 2>&1"
+
+    if %errorlevel% equ 0 (
+        set lv_return=timeout /t
+        call :sub_trace This system has timeout as a builtin Windows command
+    ) else (
+        set lv_errorlevel=!errorlevel!
+        call :sub_trace ^
+             Trying CMD builtin timeout returned errorlevel !lv_errorlevel!
+    )
 )
 
 endlocal & set gv_return=%lv_return%

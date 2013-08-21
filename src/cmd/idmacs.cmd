@@ -49,6 +49,12 @@ set gv_start_all_over=true
 rem Check which command we must use to sleep (W2K3 vs. W2K8)
 call :sub_determine_sleep_cmd
 set gv_sleep_cmd=!gv_return!
+
+if "!gv_sleep_cmd!" == "" (
+    echo ERROR: No sleep command found. See !gv_trace_file! for details
+    exit /b 1
+)
+
 call :sub_trace gv_sleep_cmd=!gv_sleep_cmd!
 
 :while_not_server_file & rem ============================== BEGIN LOOP
@@ -136,7 +142,7 @@ rem Try CMD builtin command sleep (W2K3)
 rem ************************************************************
 cmd /c "sleep /? >nul 2>&1"
 
-if %errorlevel% equ 0 (
+if not errorlevel 1 (
     set lv_return=sleep
     call :sub_trace This system has sleep as a builtin Windows command
 ) else (
@@ -154,7 +160,7 @@ rem ************************************************************
 if "!lv_return!" == "" (
     cmd /c "sleep --help >nul 2>&1"
 
-    if %errorlevel% equ 0 (
+    if not errorlevel 1 (
         set lv_return=sleep
         call :sub_trace This system has GNU sleep
     ) else (
@@ -181,7 +187,7 @@ rem ************************************************************
 if "!lv_return!" == "" (
     cmd /c "timeout /? >nul 2>&1"
 
-    if %errorlevel% equ 0 (
+    if not errorlevel 1 (
         set lv_return=timeout /t
         call :sub_trace This system has timeout as a builtin Windows command
     ) else (

@@ -138,7 +138,12 @@
 	       ;; check for zero length above
 	       (file-exists-p idmacs-help-file))
 	  (setq l-url-base
-		(concat "its:"
+		;; Note that the ms:@MSITStore: protocol
+		;; works in W2K3, W2K8 and W2K12, while
+		;; other variations like its: and ms-its:
+		;; seem to be supported in specific versions
+		;; of Windows only.
+		(concat "mk:@MSITStore:"
 			idmacs-help-file
 			"::"))
 	;;else

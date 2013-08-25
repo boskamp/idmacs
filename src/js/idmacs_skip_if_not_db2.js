@@ -19,7 +19,7 @@
 
 /**
  * Checks whether the current database platform is IBM DB2.
- * If so, skips execution of the current pass.
+ * If it is NOT, skips execution of the current pass.
  *
  * Parameters:
  *   none

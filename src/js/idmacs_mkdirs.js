@@ -66,7 +66,7 @@ function idmacs_mkdirs(io_list) {
         }
 
         if (lv_error != null) {
-            uError(lv_error);
+            idmacs_error(lv_error);
             uStop(lv_error); //========================= EXIT JOB
         }
     }// for

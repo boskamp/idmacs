@@ -87,6 +87,8 @@ Find the developer trace file dev_idmacs in the "bin" subdirectory of your Emacs
 
 4. For problems during execution of the job "Export SAP IDM Symbols":
 
+Edit job constant IDMACS_TRACE and set it to any non-empty string. All job constants can be found under the node "Job constants" underneath the job. After setting IDMACS_TRACE, run the job again. This will create a trace file "dev_idmacs_job" in the working directory of the IdM runtime, typically "C:\usr\sap\IdM\Identity Center". Copy and paste the contents of that trace file to your bug description.
+
 Copy and paste the job log into your bug description. In the MMC tree control, select the node "Job log" underneath the job. In the "Log information" pane, double click the line that corresponds to the job run that made trouble (typically the most recent one, displayed at the top). In the HTML job log that is displayed, use the context menu to "Select all", then "Copy". Now paste that into the issue description form at GitHub.
 
 

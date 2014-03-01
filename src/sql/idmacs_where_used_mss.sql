@@ -55,7 +55,7 @@ SELECT
     d.job_xml.nodes('
         for $t in (//attribute::*, /descendant-or-self::text())
                
-                (: Replace MX_DISABLED with any string to search for :)
+        (: Replace MX_DISABLED with any string to search for :)
         where contains($t, "MX_DISABLED")
 
         return $t/..

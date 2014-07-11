@@ -1,4 +1,4 @@
-; Copyright 2013 Lambert Boskamp
+                                        ; Copyright 2013 Lambert Boskamp
 ;;
 ;; Author: Lambert Boskamp <lambert@boskamp-consulting.com.nospam>
 ;;
@@ -19,8 +19,8 @@
 
 ;; Fix for issue#6
 (defadvice server-ensure-safe-dir (around
-				   idmacs-around-server-ensure-safe-dir
-				   activate)
+                                   idmacs-around-server-ensure-safe-dir
+                                   activate)
   "Ignores any errors raised from server-ensure-safe-dir"
   (ignore-errors ad-do-it))
 
@@ -85,13 +85,13 @@
   (interactive)
   (setq js2-global-externs nil)
   (let ((l-dict-dir (concat idmacs-emacs-dir
-			    "/etc"
-			    "/idmacs"
-			    "/dict")))
+                            "/etc"
+                            "/idmacs"
+                            "/dict")))
     (idmacs-js2-add-externs-from-file (concat l-dict-dir
-					      "/builtins.dic"))
+                                              "/builtins.dic"))
     (idmacs-js2-add-externs-from-file (concat l-dict-dir
-					      "/global_scripts.dic"))))
+                                              "/global_scripts.dic"))))
 
 (defun idmacs-js2-add-externs-from-file (i-filename)
   "Add all words from i-filename to js2-global-externs"
@@ -99,15 +99,15 @@
   (interactive "fDictionary File: ")
   (if (file-exists-p i-filename)
       (save-excursion
-	(with-temp-buffer
-	  (goto-char (point-min))
-	  (insert-file-contents i-filename)
-	  ;; Using "^.*$" instead of "^.+$" results in endless loop,
-	  ;; so search for non-empty lines only
-	  (while (re-search-forward "^.+$" (point-max) t)
-	    (let ((func-name (match-string 0)))
-	      (push func-name js2-global-externs)
-	      (message "Declared %s" func-name)))))
+        (with-temp-buffer
+          (goto-char (point-min))
+          (insert-file-contents i-filename)
+          ;; Using "^.*$" instead of "^.+$" results in endless loop,
+          ;; so search for non-empty lines only
+          (while (re-search-forward "^.+$" (point-max) t)
+            (let ((func-name (match-string 0)))
+              (push func-name js2-global-externs)
+              (message "Declared %s" func-name)))))
     ;;else
     (message "File %s does not exist" i-filename)))
 
@@ -115,55 +115,55 @@
   "Launch API documentation in external browser"
   (interactive)
   (let ((l-regex "[a-zA-Z0-9_]+")
-	(l-match-start)
-	(l-match-end)
-	(l-match)
-	(l-url-base)
-	(l-url))
+        (l-match-start)
+        (l-match-end)
+        (l-match)
+        (l-url-base)
+        (l-url))
     (if (looking-back l-regex 0 t)
-	(setq l-match-start (match-string 0)))
+        (setq l-match-start (match-string 0)))
     (if (looking-at l-regex)
-	(setq l-match-end (match-string 0)))
+        (setq l-match-end (match-string 0)))
 
     ;;concat will return "" even when both are nil
     (setq l-match (concat l-match-start l-match-end))
 
     (if (not (member l-match js2-global-externs))
-	(message "No API doc available for \"%s\"" l-match)
+        (message "No API doc available for \"%s\"" l-match)
 
       ;;else
       (if (and (> (length idmacs-help-file) 0)
-	       ;; The file existence check returns t
-	       ;; for empty strings(!?), so we must also
-	       ;; check for zero length above
-	       (file-exists-p idmacs-help-file))
-	  (setq l-url-base
-		;; Note that the ms:@MSITStore: protocol
-		;; works in W2K3, W2K8 and W2K12, while
-		;; other variations like its: and ms-its:
-		;; seem to be supported in specific versions
-		;; of Windows only.
-		(concat "mk:@MSITStore:"
-			idmacs-help-file
-			"::"))
-	;;else
-	(setq l-url-base
-	      (concat "http://help.sap.com"
-		      "/saphelp_nwidmic72"
-		      "/en")))
-      
+               ;; The file existence check returns t
+               ;; for empty strings(!?), so we must also
+               ;; check for zero length above
+               (file-exists-p idmacs-help-file))
+          (setq l-url-base
+                ;; Note that the ms:@MSITStore: protocol
+                ;; works in W2K3, W2K8 and W2K12, while
+                ;; other variations like its: and ms-its:
+                ;; seem to be supported in specific versions
+                ;; of Windows only.
+                (concat "mk:@MSITStore:"
+                        idmacs-help-file
+                        "::"))
+        ;;else
+        (setq l-url-base
+              (concat "http://help.sap.com"
+                      "/saphelp_nwidmic72"
+                      "/en")))
+
       (setq l-url (concat l-url-base
-			  "/using_functions"
-			  "/internal_functions"
-			  "/dse_" 
-			  (downcase l-match)
-			  ".htm"))
+                          "/using_functions"
+                          "/internal_functions"
+                          "/dse_"
+                          (downcase l-match)
+                          ".htm"))
 
       (message "Using help URL \"%s\"" l-url)
 
       (message "Displaying API doc for \"%s\"" l-match)
 
-      ;; TODO/open issue: launching Firefox this way puts 
+      ;; TODO/open issue: launching Firefox this way puts
       ;; it into safe mode after a few times;  not clear why.
       (browse-url l-url))))
 
@@ -172,27 +172,33 @@
 ;; is that MMC always uses file names with a .vbs extension,
 ;; which might confuse end users. In all other major modes,
 ;; show the full file name including extension.
+(defun idmacs-frame-title-hook-function ()
+  (if (equal major-mode 'js2-mode)
+      (setq
+       frame-title-format
+       ;; list is required to flatten the sub-lists
+       ;; see http://www.emacswiki.org/emacs/FrameTitle
+       (list "SCRIPT:    "
+             (file-name-nondirectory
+              (file-name-sans-extension buffer-file-name)
+              )
+             );;list
+       );;setq
+    (setq frame-title-format '("%b"))
+    );;if
+
+  ;; this is required to actually refresh the frame title
+  (force-mode-line-update)
+  );;defun
+
 (add-hook
  'window-configuration-change-hook
- (lambda ()
-   (if (equal major-mode 'js2-mode) 
-       (setq 
-	frame-title-format
-	;; list is required to flatten the sub-lists
-	;; see http://www.emacswiki.org/emacs/FrameTitle
-	(list "SCRIPT:    "
-	      (file-name-nondirectory 
-	       (file-name-sans-extension buffer-file-name)
-	       )
-	      );;list
-        );;setq
-     (setq frame-title-format '("%b"))
-     );;if
+ 'idmacs-frame-title-hook-function
+ );;add-hook
 
-   ;; this is required to actually refresh the frame title
-   (force-mode-line-update)
-   
-   );;lambda
+(add-hook
+ 'after-save-hook
+ 'idmacs-frame-title-hook-function
  );;add-hook
 
 ;; Never require yes or no style answers
@@ -345,7 +351,7 @@
 (setq yas-triggers-in-field t)
 (add-hook 'js2-mode-hook
           (lambda ()
-	    ;;Enable yasnippet only in js2-mode
+            ;;Enable yasnippet only in js2-mode
             (yas-minor-mode)
             );;lambda
           );;add-hook

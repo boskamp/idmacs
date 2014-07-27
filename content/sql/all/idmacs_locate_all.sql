@@ -64,7 +64,7 @@
 --
 --           NODE_NAME = [job_name|task_name|group_name|ids_name]
 --
--- Examples: Locate provisioning task 601/Modify:
+-- Examples: Locate provisioning task 601/Provisioning:
 --           WHERE NODE_TYPE='T' 
 --           AND NODE_ID=601
 --

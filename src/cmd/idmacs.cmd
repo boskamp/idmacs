@@ -20,6 +20,11 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
 
+rem Always start Emacs with Windows Compatibility Layer set to 
+rem Windows XP SP3 to work around issue#9: Displaying API documentation 
+rem fails with error "ShellExecute failed..."
+set __COMPATIBILITY_LAYER=WINXPSP3
+
 rem Name of trace file; always located in same dir as idmacs.cmd.
 rem Note that %~dp0 includes the trailing backslash; fixes issue#2
 set gv_trace_file=%~dp0dev_idmacs

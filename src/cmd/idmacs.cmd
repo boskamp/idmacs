@@ -20,9 +20,14 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
 
+rem ==================================================================
 rem Always start Emacs with Windows Compatibility Layer set to 
 rem Windows XP SP3 to work around issue#9: Displaying API documentation 
 rem fails with error "ShellExecute failed..."
+rem While the value set below seem not to be officially documented, 
+rem scripting compatibility layers in general is documented here:
+rem http://support.microsoft.com/kb/286705/en-us
+rem ====================================================================
 set __COMPATIBILITY_LAYER=WINXPSP3
 
 rem Name of trace file; always located in same dir as idmacs.cmd.

@@ -30,45 +30,44 @@
 -- TODO:
 -- * Documentation
 -- *******************************************************************
-with text_datasource_cte(node_id,node_type,node_name,native_xml) as ( select
+with text_datasource_cte(node_id,node_type,node_name,native_xml) as ( 
+select
      attr_id
      ,'A'-- Attribute
      ,attrname
      ,(select sqlvalues for xml path)
      from mxiv_schema with (nolock)
- 
+
 union all select
-     taskid
+     t.taskid
      ,'T'-- Task
-     ,taskname
-     ,(select boolsql for xml path)
-     from mxpv_alltaskinfo with (nolock)
-     where boolsql is not null
- 
-union all select
-     -- t.taskid << 32 | ta.attr_id
-     ( t.taskid * power(cast(2 as bigint),32) ) | ta.attr_id
-     ,'TA'--Task Attribute
-     ,t.taskname+':'+ta.attrname
-     ,(select sqlvalues for xml path)
-     from mxiv_taskattributes ta
-     with (nolock)
-     inner join mxpv_alltaskinfo t with (nolock)
-     on ta.taskid=t.taskid
-     where sqlvalues is not null
- 
-union all select
-   t.taskid
-   ,'TX'--Task Access Control
-   ,t.taskname
-   ,(select sqlscript,targetsqlscript from mxpv_taskaccess where taskid=t.taskid for xml path('MXPV_TASKACCESS'))
-   from mxpv_alltaskinfo t with (nolock)
-   where exists (
-       select 1 
-           from mxpv_taskaccess a with (nolock)
-           where a.taskid=t.taskid
-           and a.sqlscript is not null
-           or a.targetsqlscript is not null )
+     ,t.taskname
+     ,(select t.taskid
+              ,t.taskname
+              ,t.boolsql
+              ,(select ta.attr_id
+                       ,ta.attrname
+                       ,ta.sqlvalues
+                       from mxiv_taskattributes ta with (nolock)
+                       where ta.taskid=t.taskid
+                       order by ta.attr_id
+                       for xml path('taskattribute')
+                       ,root('taskattributes')
+                       ,type)
+              ,(select tx.sqlscript
+                       ,tx.targetsqlscript
+                       from mxpv_taskaccess tx with (nolock)
+                       where tx.taskid=t.taskid
+                       for xml path('taskaccess')
+                               ,root('taskaccesses')
+                               ,type)
+              order by t.taskid                               
+              for xml path('task')
+              -- result set will always contain one task only,
+              -- so let task be the root element, not tasks
+              --,root('tasks')
+              ,type)
+     from mxpv_alltaskinfo t with (nolock)
 )
 ,b64_enc_prefix_cte(node_id, node_type, node_name, b64_enc_prefix,
 is_xml) as (

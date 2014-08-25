@@ -32,7 +32,49 @@
 -- * XQuery for actual search
 -- * Documentation
 -- *******************************************************************
-WITH b64_enc_prefix_cte(node_id, node_type, node_name, b64_enc_prefix, is_xml) AS (
+WITH text_datasource_cte(node_id,node_type,node_name,native_xml) AS (
+SELECT
+    t.taskid
+    ,'T'-- Task
+    ,t.taskname
+    ,xmldocument(
+        xmlelement(
+            NAME "TASK"
+            ,xmlconcat(
+            xmlforest(
+                t.taskid
+                ,t.taskname
+                ,t.boolsql)
+                ,xmlelement(
+                    NAME "TASKATTRIBUTES"
+                    ,(SELECT
+                        xmlagg(
+                            xmlelement(
+                                NAME "TASKATTRIBUTE"
+                                ,xmlforest(
+                                    ta.attr_id
+                                    ,ta.attrname
+                                    ,ta.sqlvalues))
+                            ORDER BY ta.attrname)
+                        FROM mxiv_taskattributes ta
+                        WHERE ta.taskid=t.taskid))
+                ,xmlelement(
+                    NAME "TASKACCESSES"
+                    ,(SELECT
+                        xmlagg(
+                            xmlelement(
+                                NAME "TASKACCESS"
+                                ,xmlforest(
+                                    tx.sqlscript
+                                    ,tx.targetsqlscript))
+                        ORDER BY
+                            tx.sqlscript
+                            ,tx.targetsqlscript)
+                        FROM mxpv_taskaccess tx
+                        WHERE tx.taskid=t.taskid)))))
+    FROM mxpv_alltaskinfo t
+)
+,b64_enc_prefix_cte(node_id, node_type, node_name, b64_enc_prefix, is_xml) AS (
 SELECT
     scriptid
     ,'S' -- Global script

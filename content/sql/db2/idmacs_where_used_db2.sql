@@ -34,23 +34,58 @@
 -- *******************************************************************
 WITH text_datasource_cte(node_id,node_type,node_name,native_xml) AS (
 SELECT
+     a.attr_id
+     ,'A'-- Attribute
+     ,a.attrname
+     ,xmldocument(
+        xmlelement(
+            NAME "ATTRIBUTE_S"
+            ,xmlconcat(
+                xmlforest(
+                    a.attr_id
+                    ,a.attrname
+                    ,a.info
+                    ,a.deltask
+                    ,a.modtask
+                    ,a.instask                
+                    ,a.display_name
+                    ,a.tooltip
+                    ,a.regexvalidate
+                    ,a.sqlvalues
+                    ,a.sqlaccesstask
+                    ,a.sqlvaluestable
+                    ,a.sqlvaluesid)
+                    ,xmlelement(
+                        NAME "ATTRIBUTE_VALUE_CHOICE_T"
+                        ,(SELECT
+                            xmlagg(
+                                xmlelement(
+                                    NAME "ATTRIBUTE_VALUE_CHOICE_S"
+                                    ,xmlforest(
+                                        v.attr_value))
+                            ORDER BY v.attr_value)
+                        FROM mxi_attrvaluechoice v
+                        WHERE v.attr_id=a.attr_id)))))                    
+     FROM mxiv_allattributes a
+
+UNION ALL SELECT
     t.taskid
     ,'T'-- Task
     ,t.taskname
     ,xmldocument(
         xmlelement(
-            NAME "TASK"
+            NAME "TASK_S"
             ,xmlconcat(
-            xmlforest(
-                t.taskid
-                ,t.taskname
-                ,t.boolsql)
+                xmlforest(
+                    t.taskid
+                    ,t.taskname
+                    ,t.boolsql)
                 ,xmlelement(
-                    NAME "TASKATTRIBUTES"
+                    NAME "TASK_ATTRIBUTE_T"
                     ,(SELECT
                         xmlagg(
                             xmlelement(
-                                NAME "TASKATTRIBUTE"
+                                NAME "TASK_ATTRIBUTE_S"
                                 ,xmlforest(
                                     ta.attr_id
                                     ,ta.attrname
@@ -59,11 +94,11 @@ SELECT
                         FROM mxiv_taskattributes ta
                         WHERE ta.taskid=t.taskid))
                 ,xmlelement(
-                    NAME "TASKACCESSES"
+                    NAME "TASK_ACCESS_T"
                     ,(SELECT
                         xmlagg(
                             xmlelement(
-                                NAME "TASKACCESS"
+                                NAME "TASK_ACCESS_S"
                                 ,xmlforest(
                                     tx.sqlscript
                                     ,tx.targetsqlscript))

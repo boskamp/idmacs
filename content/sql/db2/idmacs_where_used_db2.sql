@@ -28,8 +28,6 @@
 --
 -- *******************************************************************
 -- TODO:
--- * Include same datasources as in MSS version
--- * XQuery for actual search
 -- * Documentation
 -- *******************************************************************
 WITH text_datasource_cte(node_id,node_type,node_name,native_xml) AS (
@@ -171,5 +169,37 @@ SELECT
     END
     FROM b64_dec_cte
 )
-SELECT * FROM b64_datasource_cte
+,any_datasource_cte(node_id,node_type,node_name,native_xml) AS (
+SELECT
+     *
+     from b64_datasource_cte
+UNION ALL SELECT
+     *
+     FROM text_datasource_cte
+)
+SELECT
+     node_id
+     ,node_type
+     ,node_name
+     ,match_location
+     ,match_document
+     FROM any_datasource_cte
+     ,xmltable('
+         for $t in ( $native_xml//attribute::*
+                    ,$native_xml/descendant-or-self::text())
+         where contains( upper-case($t)
+                        ,upper-case("YOUR_SEARCH_TERM_HERE")) 
+         return $t
+         
+         (: This could be used on DB2 to conditionally return  :)
+         (: parent of attribute nodes, but self of text nodes. :)
+         (: XQuery "instance of"" operator seems unsupported.  :)
+         (:                                                    :)
+         (: return if($t/self::attribute()) then $t/.. else $t :) 
+     ' 
+     PASSING BY REF native_xml AS "native_xml"
+     COLUMNS "MATCH_LOCATION"  CLOB(2G) PATH '.'
+             ,"MATCH_DOCUMENT" XML PATH '/'
+     )
+    ORDER BY node_id,node_type
 ;

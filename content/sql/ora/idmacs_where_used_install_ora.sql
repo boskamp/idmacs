@@ -31,15 +31,15 @@
 -- * Documentation
 -- *******************************************************************
 
---------------------------------------------------------
---  DDL for Type IDMACS_CLOB_OBJ
---------------------------------------------------------
   DROP PACKAGE BODY "IDMACS_WHERE_USED";
   DROP PACKAGE "IDMACS_WHERE_USED";
   DROP TYPE "IDMACS_CLOB_TAB";
   DROP TYPE BODY "IDMACS_CLOB_OBJ";
   DROP TYPE "IDMACS_CLOB_OBJ";
-  
+/  
+--------------------------------------------------------
+--  DDL for Type IDMACS_CLOB_OBJ
+--------------------------------------------------------
   CREATE OR REPLACE TYPE "IDMACS_CLOB_OBJ" 
     as object (
   
@@ -92,7 +92,7 @@ CREATE OR REPLACE TYPE BODY "IDMACS_CLOB_OBJ"
       -- Piecewise fetching of the LONG column, appending to the CLOB
       loop
           dbms_sql.column_value_long(
-              iv_dbms_sql_cursor,
+              iv_dbms_sql_cursor
               ,03 --column ID of LONG column
               ,lv_buf_len
               ,lv_cur_pos
@@ -163,7 +163,43 @@ END IDMACS_WHERE_USED;
 
   CREATE OR REPLACE PACKAGE BODY "IDMACS_WHERE_USED" 
     AS
-
+  
+  /**
+   * Private procedure VALIDATE_COLUMN_NAME
+   *
+   * Checks that IV_COL_NAME is a column name
+   * of table IV_TAB_NAME. If not, raises an application error.
+   */
+  PROCEDURE VALIDATE_TABLE_COLUMN_NAME(
+      IV_TAB_NAME VARCHAR2
+      ,IV_COL_NAME VARCHAR2
+  )
+  AS
+      LV_COUNT INTEGER;
+  BEGIN
+      SELECT COUNT(*) INTO LV_COUNT
+          FROM USER_TABLES
+          WHERE TABLE_NAME = IV_TAB_NAME
+          ;
+      IF LV_COUNT = 0 THEN
+         RAISE_APPLICATION_ERROR(
+             -20010
+             , 'Not a valid table name: '||IV_TAB_NAME
+         );
+      END IF;
+      SELECT COUNT(*) INTO LV_COUNT
+          FROM USER_TAB_COLS
+          WHERE TABLE_NAME=IV_TAB_NAME
+          AND COLUMN_NAME = IV_COL_NAME
+          ;
+      IF LV_COUNT = 0 THEN
+          RAISE_APPLICATION_ERROR(
+             -20011
+             , 'Not a valid column name: '||IV_COL_NAME
+          );
+      END IF;
+  end validate_table_column_name;
+    
   FUNCTION BASE64_DECODE(
         iv_base64 IN CLOB
     )
@@ -208,17 +244,18 @@ function READ_TAB_WITH_LONG_COL_PTF(
         ,iv_long_column_name in varchar2
     )
     return idmacs_clob_tab pipelined
-as
-  lv_query           varchar2(200);
+AS
+  lv_query           varchar2(2000);
   lv_dbms_sql_cursor binary_integer;
   lv_execute_rc      pls_integer;
-  lo_clob_object     idmacs_clob_obj;
+  LO_CLOB_OBJECT     IDMACS_CLOB_OBJ;
 
--- TODO: Validation of input arguments to avoid SQL injection
-begin
-  -- TODO: don't enable SERVEROUTPUT in code; let users do it
-  dbms_output.enable(buffer_size => 1000000);
-  
+BEGIN
+  --Validate dynamic SQL input to prevent SQL injection
+  VALIDATE_TABLE_COLUMN_NAME(IV_TABLE_NAME, IV_ID_COLUMN_NAME);
+  VALIDATE_TABLE_COLUMN_NAME(IV_TABLE_NAME, IV_NAME_COLUMN_NAME);
+  validate_table_column_name(iv_table_name, iv_long_column_name);
+   
   lv_query :=
      'select '
      || iv_id_column_name
@@ -232,30 +269,33 @@ begin
 
   -- Create cursor, parse and bind
   lv_dbms_sql_cursor := dbms_sql.open_cursor;
-  dbms_output.put_line('Open cursor succeeded');
   
   dbms_sql.parse(lv_dbms_sql_cursor, lv_query, dbms_sql.NATIVE);
-  dbms_output.put_line('Parse cursor succeeded');
   
   -- Define columns through dummy object type instance
   lo_clob_object := idmacs_clob_obj();
-  dbms_output.put_line('lo_clob_object initialized');
   
   lo_clob_object.define_columns(lv_dbms_sql_cursor);
-  dbms_output.put_line('Define columns succeeded');
   
   -- Execute
-  lv_execute_rc := dbms_sql.execute(lv_dbms_sql_cursor);
-  dbms_output.put_line('Cursor executed, RC='||lv_execute_rc);
+  LV_EXECUTE_RC := DBMS_SQL.EXECUTE(LV_DBMS_SQL_CURSOR);
+  dbms_output.put_line('Cursor executed, RC=' || lv_execute_rc);
   
   -- Fetch all rows, pipe each back
   while dbms_sql.fetch_rows(lv_dbms_sql_cursor) > 0 loop
   
     lo_clob_object := idmacs_clob_obj(lv_dbms_sql_cursor);
-    dbms_output.put_line('lo_clob_object populated');
     
-    pipe row(lo_clob_object);
-    dbms_output.put_line('Current row piped back to caller');
+    PIPE ROW(LO_CLOB_OBJECT);
+    
+    DBMS_OUTPUT.PUT_LINE(
+      'Piped back table='
+      || IV_TABle_NAME
+      || ' ,node_id=' 
+      || lO_CLOB_OBJECT.NODE_ID
+      || ', node_name=' 
+      || lo_clob_object.node_name
+    );
   end loop;
 
   dbms_sql.close_cursor(lv_dbms_sql_cursor);

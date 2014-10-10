@@ -33,7 +33,8 @@
 
   DROP PACKAGE BODY "IDMACS_WHERE_USED";
   DROP PACKAGE "IDMACS_WHERE_USED";
-  -- DROP TYPE BODY "IDMACS_CLOB_TAB"; --this doesn't have any body
+  -- This table type doesn't have any body
+  -- DROP TYPE BODY "IDMACS_CLOB_TAB";
   DROP TYPE "IDMACS_CLOB_TAB";
   DROP TYPE BODY "IDMACS_CLOB_OBJ";
   DROP TYPE "IDMACS_CLOB_OBJ";
@@ -103,7 +104,7 @@ CREATE OR REPLACE TYPE BODY "IDMACS_CLOB_OBJ"
           EXIT WHEN lv_bytes_returned = 0;
 
           -- Append VARCHAR2 buffer to temporary CLOB
-	        dbms_lob.append(node_data, lv_buf_val);
+      dbms_lob.append(node_data, lv_buf_val);
           lv_offset := lv_offset + lv_bytes_returned;
       END LOOP;
 
@@ -121,15 +122,15 @@ CREATE OR REPLACE TYPE BODY "IDMACS_CLOB_OBJ"
      -- INT column
     dbms_sql.define_column(
         iv_dbms_sql_cursor
-	,1
-	,node_id
+    ,1
+    ,node_id
     );
     -- VARCHAR2 column
     dbms_sql.define_column(
         iv_dbms_sql_cursor
-	,2
-	,node_name
-	,2000 -- length of node_name's data type
+    ,2
+    ,node_name
+    ,2000 -- length of node_name's data type
     );
     -- LONG column
     dbms_sql.define_column_long(
@@ -160,11 +161,13 @@ END;
    *
    * @param IV_STRING string to test
    * @param IV_SUBSTR substring to test for
+   * @param IV_CASE_SENSITIVE 0 to ignore case, 1 to match case (default: 0)
    * @return 1 if IV_STRING contains IV_SUBSTR, 0 otherwise
    */
    FUNCTION clob_contains(
        iv_string CLOB
        ,iv_substr VARCHAR2
+       ,iv_case_sensitive INTEGER DEFAULT 0
    )
    RETURN INTEGER;
 
@@ -215,27 +218,19 @@ END IDMACS_WHERE_USED;
    AS 
        lv_result INTEGER;
    BEGIN
-       SELECT xmlcast(
-           xmlquery('
-               let $lv_result := contains($iv_string, $iv_substr)
-               return $lv_result
-               '
-               PASSING 
-                   iv_string  AS "iv_string"
-                   ,iv_substr AS "iv_substr"
-               RETURNING CONTENT
-           --xs:boolean(true) is cast to 1
-           --xs:boolean(false) is cast to 0
-           ) AS INTEGER) INTO lv_result
-           FROM dual
-           ;
+       IF instr(iv_string, iv_substr) > 0 THEN
+           lv_result := 1;
+       ELSE
+           lv_result := 0;
+       END IF;
 
        RETURN lv_result;
   END varchar2_contains;
 
   FUNCTION clob_contains(
-       iv_string CLOB
-       ,iv_substr VARCHAR2
+       iv_string          CLOB
+       ,iv_substr         VARCHAR2
+       ,iv_case_sensitive INTEGER DEFAULT 0
    )
    RETURN INTEGER
    AS 
@@ -243,33 +238,53 @@ END IDMACS_WHERE_USED;
       -- IV_STRING will always return false. This is consistent
       -- with VARCHAR2_CONTAINS and XQuery fn:contains().
       lv_result               INTEGER     := 0;
-      lv_string               VARCHAR2(2000 CHAR);
+      lv_substr_upper         VARCHAR2(32767 BYTE);
+      lv_buf_val              VARCHAR2(2000 CHAR); -- TODO: use max byte size
       lv_num_chars_to_read    PLS_INTEGER := 0;
       lv_offset               PLS_INTEGER := 1;
       lv_num_chars_remaining  PLS_INTEGER := 0;
   BEGIN
-      lv_num_chars_remaining := length(iv_string) - lv_offset + 1;
+      IF iv_case_sensitive = 0 THEN
+          lv_substr_upper := upper(iv_substr);
+
+          lv_num_chars_remaining := length(iv_string) - lv_offset + 1;
      
-      WHILE lv_num_chars_remaining > 0 LOOP
+          WHILE lv_num_chars_remaining > 0 LOOP
      
-      lv_num_chars_to_read := least(lv_num_chars_remaining, 2000);
+              lv_num_chars_to_read := least(lv_num_chars_remaining, 2000);
      
-      lv_string := dbms_lob.substr(
-          iv_string --CLOB, so returned datatype is VARCHAR2
-          ,lv_num_chars_to_read
-          ,lv_offset
-      );
+              lv_buf_val := dbms_lob.substr(
+                  iv_string --CLOB, so returned datatype is VARCHAR2
+                  ,lv_num_chars_to_read
+                  ,lv_offset
+              );
+
+	      -- TODO: adapt offset computation so that matches across
+	      -- buffer boundary work as well; right now, they're not found
+              lv_offset := lv_offset + lv_num_chars_to_read;
      
-      lv_offset := lv_offset + lv_num_chars_to_read;
-     
-      lv_num_chars_remaining
-          := lv_num_chars_remaining - lv_num_chars_to_read;
+              lv_num_chars_remaining
+                  := lv_num_chars_remaining - lv_num_chars_to_read;
                                      
-        lv_result := idmacs_where_used.varchar2_contains(lv_string, iv_substr);
-        EXIT WHEN lv_result = 1;
-      END LOOP;
+              lv_result
+                  := idmacs_where_used.varchar2_contains(
+                      upper(lv_buf_val)
+                      ,lv_substr_upper
+                  );
+          
+              EXIT WHEN lv_result = 1;
+          END LOOP;
+
+      ELSE -- case-insensitive search
+          IF dbms_lob.instr(iv_string, iv_substr) > 0 THEN
+              lv_result := 1;
+          ELSE
+              lv_result := 0;
+          END IF;
+      END IF;
      
       RETURN lv_result;
+
   END clob_contains;
    
   /**
@@ -338,7 +353,7 @@ END IDMACS_WHERE_USED;
                                      
         lv_result
           := lv_result
-	  --TODO: use dbms_lob.append instead of ||
+      --TODO: use dbms_lob.append instead of ||
           || utl_raw.cast_to_varchar2(
               utl_encode.base64_decode(
                 utl_raw.cast_to_raw(lv_substring)));
@@ -389,7 +404,12 @@ BEGIN
   
   -- Execute
   lv_execute_rc := dbms_sql.execute(lv_dbms_sql_cursor);
-  dbms_output.put_line('Cursor executed, RC=' || lv_execute_rc);
+  -- ============================================================
+  -- UNCOMMENT FOR DEBUGGING ONLY
+  -- and ensure buffer for DBMS output is large enough
+  -- ============================================================
+  -- dbms_output.put_line('Cursor executed, RC=' || lv_execute_rc);
+  -- ============================================================
   
   -- Fetch all rows, pipe each back
   WHILE dbms_sql.fetch_rows(lv_dbms_sql_cursor) > 0 LOOP
@@ -397,15 +417,20 @@ BEGIN
     lo_clob_object := idmacs_clob_obj(lv_dbms_sql_cursor);
     
     PIPE ROW(lo_clob_object);
-    
-    dbms_output.put_line(
-      'Piped back table='
-      || iv_table_name
-      || ' ,node_id=' 
-      || lo_clob_object.node_id
-      || ', node_name=' 
-      || lo_clob_object.node_name
-    );
+
+    -- ============================================================
+    -- UNCOMMENT FOR DEBUGGING ONLY
+    -- and ensure buffer for DBMS output is large enough
+    -- ============================================================
+    -- dbms_output.put_line(
+    --   'Piped back table='
+    --   || iv_table_name
+    --   || ' ,node_id=' 
+    --   || lo_clob_object.node_id
+    --   || ', node_name=' 
+    --   || lo_clob_object.node_name
+    -- );
+    -- ============================================================    
   END LOOP;
 
   dbms_sql.close_cursor(lv_dbms_sql_cursor);

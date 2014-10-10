@@ -108,7 +108,8 @@ UNION ALL SELECT
 SELECT
     scriptid
     ,'S' -- Global script
-    ,cast(scriptname as VARCHAR2(2000)) -- TODO: consistent length
+    --NODE_NAME length must be consistent with IDMACS_CLOB_OBJ.NODE_NAME
+    ,cast(scriptname as VARCHAR2(2000))
     ,scriptdefinition
     ,0
     FROM mc_global_scripts
@@ -199,8 +200,8 @@ SELECT
     * 
     FROM all_text_cte
     WHERE idmacs_where_used.clob_contains(
-        match_location
-        , 'YOUR_SEARCH_TERM_HERE'
+        MATCH_LOCATION
+        , 'sap_core_getPassword'
     ) > 0
     ORDER BY node_type, node_id
 ;

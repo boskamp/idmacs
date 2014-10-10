@@ -45,7 +45,7 @@
     AS OBJECT (
   
     node_id          NUMBER(10,0)
-    ,node_name       VARCHAR2(2000)
+    ,node_name       VARCHAR2(2000 CHAR)
     ,node_data       CLOB
 
     ,CONSTRUCTOR FUNCTION IDMACS_CLOB_OBJ
@@ -79,31 +79,32 @@ CREATE OR REPLACE TYPE BODY "IDMACS_CLOB_OBJ"
   CONSTRUCTOR FUNCTION IDMACS_CLOB_OBJ(iv_dbms_sql_cursor IN INTEGER)
   RETURN SELF AS RESULT
   AS
-    lv_long_val LONG;
-    lv_long_len INTEGER;
-    lv_buf_len  INTEGER := 32760;
-    lv_cur_pos  NUMBER := 0; --TODO: verify choice of data type
+    lv_buf_val        VARCHAR2(32767 BYTE);
+    lv_buf_len        INTEGER := 32767;
+    lv_bytes_returned INTEGER;
+    lv_offset         INTEGER := 0;
   BEGIN
-      dbms_sql.column_value(iv_dbms_sql_cursor, 01, node_id);
-      dbms_sql.column_value(iv_dbms_sql_cursor, 02, node_name);
+      dbms_sql.column_value(iv_dbms_sql_cursor, 1, node_id);
+      dbms_sql.column_value(iv_dbms_sql_cursor, 2, node_name);
 
-      -- Create CLOB.
+      -- Create CLOB
       dbms_lob.createtemporary(node_data, FALSE, dbms_lob.call);
 
-      -- Piecewise fetching of the LONG column, appending to the CLOB
-      loop
+      -- Piecewise fetching of the LONG column into VARCHAR2 buffer
+      LOOP
           dbms_sql.column_value_long(
               iv_dbms_sql_cursor
-              ,03 --column ID of LONG column
+              ,3 --position of LONG column in cursor's SELECT list 
               ,lv_buf_len
-              ,lv_cur_pos
-              ,lv_long_val
-              ,lv_long_len
+              ,lv_offset
+              ,lv_buf_val
+              ,lv_bytes_returned
           );
-          EXIT WHEN lv_long_len = 0;
+          EXIT WHEN lv_bytes_returned = 0;
 
-	        dbms_lob.append(node_data, lv_long_val);
-          lv_cur_pos := lv_cur_pos + lv_long_len;
+          -- Append VARCHAR2 buffer to temporary CLOB
+	        dbms_lob.append(node_data, lv_buf_val);
+          lv_offset := lv_offset + lv_bytes_returned;
       END LOOP;
 
     RETURN;
@@ -118,11 +119,23 @@ CREATE OR REPLACE TYPE BODY "IDMACS_CLOB_OBJ"
 
   BEGIN
      -- INT column
-    dbms_sql.define_column(iv_dbms_sql_cursor, 01, node_id);
+    dbms_sql.define_column(
+        iv_dbms_sql_cursor
+	,1
+	,node_id
+    );
     -- VARCHAR2 column
-    dbms_sql.define_column(iv_dbms_sql_cursor, 02, node_name, 90);
+    dbms_sql.define_column(
+        iv_dbms_sql_cursor
+	,2
+	,node_name
+	,2000 -- length of node_name's data type
+    );
     -- LONG column
-    dbms_sql.define_column_long(iv_dbms_sql_cursor, 03);
+    dbms_sql.define_column_long(
+        iv_dbms_sql_cursor
+        ,3
+    );
   END define_columns;
 END;
 /

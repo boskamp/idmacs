@@ -33,6 +33,7 @@
 
   DROP PACKAGE BODY "IDMACS_WHERE_USED";
   DROP PACKAGE "IDMACS_WHERE_USED";
+  -- DROP TYPE BODY "IDMACS_CLOB_TAB"; --this doesn't have any body
   DROP TYPE "IDMACS_CLOB_TAB";
   DROP TYPE BODY "IDMACS_CLOB_OBJ";
   DROP TYPE "IDMACS_CLOB_OBJ";
@@ -41,33 +42,33 @@
 --  DDL for Type IDMACS_CLOB_OBJ
 --------------------------------------------------------
   CREATE OR REPLACE TYPE "IDMACS_CLOB_OBJ" 
-    as object (
+    AS OBJECT (
   
     node_id          NUMBER(10,0)
-    ,node_name       varchar2(2000)
-    ,node_data       clob
+    ,node_name       VARCHAR2(2000)
+    ,node_data       CLOB
 
-    ,constructor function idmacs_clob_obj
-    RETURN self AS result
+    ,CONSTRUCTOR FUNCTION IDMACS_CLOB_OBJ
+    RETURN SELF AS RESULT
   
-    ,constructor function idmacs_clob_obj(iv_dbms_sql_cursor in integer)
-    return self as result
+    ,CONSTRUCTOR FUNCTION IDMACS_CLOB_OBJ(iv_dbms_sql_cursor IN INTEGER)
+    RETURN SELF AS RESULT
 
-  ,member procedure define_columns(iv_dbms_sql_cursor in integer)
+  ,MEMBER PROCEDURE define_columns(iv_dbms_sql_cursor IN INTEGER)
 );
 /
 CREATE OR REPLACE TYPE BODY "IDMACS_CLOB_OBJ" 
-    as
+    AS
   /**
    * Constructor. Sets all attributes to NULL.
    * @return  New object type instance.
    */
-  constructor function idmacs_clob_obj
-  return self as result as
+  CONSTRUCTOR FUNCTION IDMACS_CLOB_OBJ
+  RETURN SELF AS RESULT AS
 
-  begin
+  BEGIN
     RETURN;
-  end idmacs_clob_obj;
+  END IDMACS_CLOB_OBJ;
 
   /**
    * Constructs a new instance with values fetched from DBMS_SQL cursor
@@ -75,19 +76,19 @@ CREATE OR REPLACE TYPE BODY "IDMACS_CLOB_OBJ"
    * @param   iv_dbms_sql_cursor
    * @return  new object type instance
    */
-  constructor function idmacs_clob_obj(iv_dbms_sql_cursor in integer)
-  return self as result
-  as
-    lv_long_val long;
-    lv_long_len integer;
-    lv_buf_len  integer := 32760;
-    lv_cur_pos  number := 0;
-  begin
+  CONSTRUCTOR FUNCTION IDMACS_CLOB_OBJ(iv_dbms_sql_cursor IN INTEGER)
+  RETURN SELF AS RESULT
+  AS
+    lv_long_val LONG;
+    lv_long_len INTEGER;
+    lv_buf_len  INTEGER := 32760;
+    lv_cur_pos  NUMBER := 0; --TODO: verify choice of data type
+  BEGIN
       dbms_sql.column_value(iv_dbms_sql_cursor, 01, node_id);
       dbms_sql.column_value(iv_dbms_sql_cursor, 02, node_name);
 
       -- Create CLOB.
-      dbms_lob.createtemporary(node_data, false, dbms_lob.call);
+      dbms_lob.createtemporary(node_data, FALSE, dbms_lob.call);
 
       -- Piecewise fetching of the LONG column, appending to the CLOB
       loop
@@ -99,21 +100,21 @@ CREATE OR REPLACE TYPE BODY "IDMACS_CLOB_OBJ"
               ,lv_long_val
               ,lv_long_len
           );
-          exit when lv_long_len = 0;
+          EXIT WHEN lv_long_len = 0;
 
 	        dbms_lob.append(node_data, lv_long_val);
           lv_cur_pos := lv_cur_pos + lv_long_len;
-      end loop;
+      END LOOP;
 
     RETURN;
-  end idmacs_clob_obj;
+  END idmacs_clob_obj;
 
   /**
    * Defines all columns in DBMS_SQL cursor
    * @param  iv_dbms_sql_cursor parsed DBMS_SQL cursor
    */
-  member procedure define_columns(iv_dbms_sql_cursor in integer) 
-  as
+  MEMBER PROCEDURE define_columns(iv_dbms_sql_cursor IN INTEGER) 
+  AS
 
   BEGIN
      -- INT column
@@ -122,7 +123,7 @@ CREATE OR REPLACE TYPE BODY "IDMACS_CLOB_OBJ"
     dbms_sql.define_column(iv_dbms_sql_cursor, 02, node_name, 90);
     -- LONG column
     dbms_sql.define_column_long(iv_dbms_sql_cursor, 03);
-  end define_columns;
+  END define_columns;
 END;
 /
 --------------------------------------------------------
@@ -131,7 +132,7 @@ END;
 
   CREATE OR REPLACE TYPE "IDMACS_CLOB_TAB" 
     AS
-    TABLE OF idmacs_clob_obj;
+    TABLE OF IDMACS_CLOB_OBJ;
 /
 --------------------------------------------------------
 --  DDL for Package IDMACS_WHERE_USED
@@ -140,13 +141,36 @@ END;
   CREATE OR REPLACE PACKAGE "IDMACS_WHERE_USED" 
     AUTHID CURRENT_USER
     AS 
-  
-    FUNCTION BASE64_DECODE(
+
+  /**
+   * Public function CLOB_CONTAINS
+   *
+   * @param IV_STRING string to test
+   * @param IV_SUBSTR substring to test for
+   * @return 1 if IV_STRING contains IV_SUBSTR, 0 otherwise
+   */
+   FUNCTION clob_contains(
+       iv_string CLOB
+       ,iv_substr VARCHAR2
+   )
+   RETURN INTEGER;
+
+    /**
+     * Public function BASE64_DECODE
+     *
+     * TODO: documentation
+     */
+    FUNCTION base64_decode(
         iv_base64 IN CLOB
     )
     RETURN CLOB;
     
-    FUNCTION READ_TAB_WITH_LONG_COL_PTF(
+    /**
+     * Public function READ_TAB_WITH_LONG_COL_PFF
+     *
+     * TODO: documentation
+     */
+    FUNCTION read_tab_with_long_col_ptf(
         iv_table_name        IN VARCHAR2
         ,iv_id_column_name   IN VARCHAR2
         ,iv_name_column_name IN VARCHAR2
@@ -170,63 +194,57 @@ END IDMACS_WHERE_USED;
    * @param IV_SUBSTR substring to test for
    * @return 1 if IV_STRING contains IV_SUBSTR, 0 otherwise
    */
-   FUNCTION VARCHAR2_CONTAINS(
-       IV_STRING VARCHAR2
-       ,IV_SUBSTR VARCHAR2
+   FUNCTION varchar2_contains(
+       iv_string VARCHAR2
+       ,iv_substr VARCHAR2
    )
-   RETURN integer
+   RETURN INTEGER
    AS 
-       lv_result integer;
+       lv_result INTEGER;
    BEGIN
-       SELECT XMLCAST(
-           XMLQUERY('
+       SELECT xmlcast(
+           xmlquery('
                let $lv_result := contains($iv_string, $iv_substr)
                return $lv_result
                '
                PASSING 
-                   IV_STRING  AS "iv_string"
-                   ,IV_SUBSTR AS "iv_substr"
+                   iv_string  AS "iv_string"
+                   ,iv_substr AS "iv_substr"
                RETURNING CONTENT
            --xs:boolean(true) is cast to 1
            --xs:boolean(false) is cast to 0
-           ) AS integer) INTO LV_RESULT
-           FROM DUAL
+           ) AS INTEGER) INTO lv_result
+           FROM dual
            ;
 
-       return lv_result;
-  END VARCHAR2_CONTAINS;
-  /**
-   * Private function CLOB_CONTAINS
-   *
-   * @param IV_STRING string to test
-   * @param IV_SUBSTR substring to test for
-   * @return 1 if IV_STRING contains IV_SUBSTR, 0 otherwise
-   */
-   FUNCTION clob_CONTAINS(
-       IV_STRING clob
-       ,IV_SUBSTR VARCHAR2
+       RETURN lv_result;
+  END varchar2_contains;
+
+  FUNCTION clob_contains(
+       iv_string CLOB
+       ,iv_substr VARCHAR2
    )
-   RETURN integer
+   RETURN INTEGER
    AS 
       -- Initialize result to false (0), so a zero-length input
       -- IV_STRING will always return false. This is consistent
       -- with VARCHAR2_CONTAINS and XQuery fn:contains().
-      LV_RESULT               integer     := 0;
-      lv_string               VARCHAR2(2000 char);
+      lv_result               INTEGER     := 0;
+      lv_string               VARCHAR2(2000 CHAR);
       lv_num_chars_to_read    PLS_INTEGER := 0;
       lv_offset               PLS_INTEGER := 1;
       lv_num_chars_remaining  PLS_INTEGER := 0;
   BEGIN
-      lv_num_chars_remaining := LENGTH(iv_string) - lv_offset + 1;
+      lv_num_chars_remaining := length(iv_string) - lv_offset + 1;
      
       WHILE lv_num_chars_remaining > 0 LOOP
      
-      lv_num_chars_to_read := LEAST(lv_num_chars_remaining, 2000);
+      lv_num_chars_to_read := least(lv_num_chars_remaining, 2000);
      
-      LV_STRING := DBMS_LOB.SUBSTR(
+      lv_string := dbms_lob.substr(
           iv_string --CLOB, so returned datatype is VARCHAR2
           ,lv_num_chars_to_read
-          ,LV_OFFSET
+          ,lv_offset
       );
      
       lv_offset := lv_offset + lv_num_chars_to_read;
@@ -234,69 +252,71 @@ END IDMACS_WHERE_USED;
       lv_num_chars_remaining
           := lv_num_chars_remaining - lv_num_chars_to_read;
                                      
-        LV_RESULT := VARCHAR2_CONTAINS(LV_STRING, IV_SUBSTR);
-        exit when lv_result = 1;
+        lv_result := idmacs_where_used.varchar2_contains(lv_string, iv_substr);
+        EXIT WHEN lv_result = 1;
       END LOOP;
      
       RETURN lv_result;
-  END clob_CONTAINS;
+  END clob_contains;
    
   /**
-   * Private procedure VALIDATE_COLUMN_NAME
+   * Private procedure validate_column_name
    *
-   * Checks that IV_COL_NAME is a column name
-   * of table IV_TAB_NAME. If not, raises an application error.
+   * Checks that iv_col_name is a column name
+   * of table iv_tab_name. If not, raises an application error.
    */
-  PROCEDURE VALIDATE_TABLE_COLUMN_NAME(
-      IV_TAB_NAME VARCHAR2
-      ,IV_COL_NAME VARCHAR2
+  PROCEDURE validate_table_column_name(
+      iv_tab_name VARCHAR2
+      ,iv_col_name VARCHAR2
   )
   AS
-      LV_COUNT INTEGER;
+      lv_count integer;
   BEGIN
-      SELECT COUNT(*) INTO LV_COUNT
-          FROM USER_TABLES
-          WHERE TABLE_NAME = IV_TAB_NAME
+      SELECT count(*) INTO lv_count
+          FROM user_tables
+          WHERE table_name = iv_tab_name
           ;
-      IF LV_COUNT = 0 THEN
-         RAISE_APPLICATION_ERROR(
+      IF lv_count = 0 THEN
+         raise_application_error(
              -20010
-             , 'Not a valid table name: '||IV_TAB_NAME
+             , 'Not a valid table name: '||iv_tab_name
          );
       END IF;
-      SELECT COUNT(*) INTO LV_COUNT
-          FROM USER_TAB_COLS
-          WHERE TABLE_NAME=IV_TAB_NAME
-          AND COLUMN_NAME = IV_COL_NAME
+      SELECT count(*) INTO lv_count
+          FROM user_tab_cols
+          WHERE table_name=iv_tab_name
+          AND column_name = iv_col_name
           ;
-      IF LV_COUNT = 0 THEN
-          RAISE_APPLICATION_ERROR(
+      IF lv_count = 0 THEN
+          raise_application_error(
              -20011
-             , 'Not a valid column name: '||IV_COL_NAME
+             , 'Not a valid column name: '||iv_col_name
           );
       END IF;
-  end validate_table_column_name;
+  END validate_table_column_name;
     
-  FUNCTION BASE64_DECODE(
+  FUNCTION base64_decode(
         iv_base64 IN CLOB
     )
-    RETURN CLOB AS
-      LV_RESULT               CLOB;
-      lv_substring            VARCHAR2(2000 char);
+    RETURN CLOB
+    AS
+      lv_result               CLOB;
+      lv_substring            VARCHAR2(2000 CHAR);
       lv_num_chars_to_read    PLS_INTEGER := 0;
       lv_offset               PLS_INTEGER := 1;
       lv_num_chars_remaining  PLS_INTEGER := 0;
   BEGIN
-      lv_num_chars_remaining := LENGTH(iv_base64) - lv_offset + 1;
+      lv_num_chars_remaining := length(iv_base64) - lv_offset + 1;
      
       WHILE lv_num_chars_remaining > 0 LOOP
      
-      lv_num_chars_to_read := LEAST(lv_num_chars_remaining, 2000);
+      lv_num_chars_to_read := least(lv_num_chars_remaining, 2000);
      
-      lv_substring := DBMS_LOB.SUBSTR(
+      lv_substring := dbms_lob.substr(
           iv_base64
           ,lv_num_chars_to_read
-          ,lv_offset);
+          ,lv_offset
+      );
      
       lv_offset := lv_offset + lv_num_chars_to_read;
      
@@ -305,47 +325,47 @@ END IDMACS_WHERE_USED;
                                      
         lv_result
           := lv_result
-          || UTL_RAW.cast_to_varchar2(
-              UTL_ENCODE.base64_decode(
-                UTL_RAW.cast_to_raw(lv_substring)));
+	  --TODO: use dbms_lob.append instead of ||
+          || utl_raw.cast_to_varchar2(
+              utl_encode.base64_decode(
+                utl_raw.cast_to_raw(lv_substring)));
       END LOOP;
      
       RETURN lv_result;
   
-  END BASE64_DECODE; 
+  END base64_decode; 
   
-function READ_TAB_WITH_LONG_COL_PTF(
-        iv_table_name        in varchar2
-        ,iv_id_column_name   in varchar2
-        ,iv_name_column_name in varchar2
-        ,iv_long_column_name in varchar2
+FUNCTION read_tab_with_long_col_ptf(
+        iv_table_name        IN VARCHAR2
+        ,iv_id_column_name   IN VARCHAR2
+        ,iv_name_column_name IN VARCHAR2
+        ,iv_long_column_name IN VARCHAR2
     )
-    return idmacs_clob_tab pipelined
+    RETURN idmacs_clob_tab PIPELINED
 AS
-  lv_query           varchar2(2000);
-  lv_dbms_sql_cursor binary_integer;
-  lv_execute_rc      pls_integer;
+  lv_query           VARCHAR2(2000);
+  lv_dbms_sql_cursor INTEGER;
+  lv_execute_rc      PLS_INTEGER;
   LO_CLOB_OBJECT     IDMACS_CLOB_OBJ;
-
 BEGIN
   --Validate dynamic SQL input to prevent SQL injection
-  VALIDATE_TABLE_COLUMN_NAME(IV_TABLE_NAME, IV_ID_COLUMN_NAME);
-  VALIDATE_TABLE_COLUMN_NAME(IV_TABLE_NAME, IV_NAME_COLUMN_NAME);
+  validate_table_column_name(iv_table_name, iv_id_column_name);
+  validate_table_column_name(iv_table_name, iv_name_column_name);
   validate_table_column_name(iv_table_name, iv_long_column_name);
    
   lv_query :=
-     'select '
+     'SELECT '
      || iv_id_column_name
      || ', '
      || iv_name_column_name
      || ', ' 
      || iv_long_column_name
-     || ' from '
+     || ' FROM '
      || iv_table_name
      ;
 
   -- Create cursor, parse and bind
-  lv_dbms_sql_cursor := dbms_sql.open_cursor;
+  lv_dbms_sql_cursor := dbms_sql.open_cursor();
   
   dbms_sql.parse(lv_dbms_sql_cursor, lv_query, dbms_sql.NATIVE);
   
@@ -355,41 +375,41 @@ BEGIN
   lo_clob_object.define_columns(lv_dbms_sql_cursor);
   
   -- Execute
-  LV_EXECUTE_RC := DBMS_SQL.EXECUTE(LV_DBMS_SQL_CURSOR);
+  lv_execute_rc := dbms_sql.execute(lv_dbms_sql_cursor);
   dbms_output.put_line('Cursor executed, RC=' || lv_execute_rc);
   
   -- Fetch all rows, pipe each back
-  while dbms_sql.fetch_rows(lv_dbms_sql_cursor) > 0 loop
+  WHILE dbms_sql.fetch_rows(lv_dbms_sql_cursor) > 0 LOOP
   
     lo_clob_object := idmacs_clob_obj(lv_dbms_sql_cursor);
     
-    PIPE ROW(LO_CLOB_OBJECT);
+    PIPE ROW(lo_clob_object);
     
-    DBMS_OUTPUT.PUT_LINE(
+    dbms_output.put_line(
       'Piped back table='
-      || IV_TABle_NAME
+      || iv_table_name
       || ' ,node_id=' 
-      || lO_CLOB_OBJECT.NODE_ID
+      || lo_clob_object.node_id
       || ', node_name=' 
       || lo_clob_object.node_name
     );
-  end loop;
+  END LOOP;
 
   dbms_sql.close_cursor(lv_dbms_sql_cursor);
-exception
-  when others then
+EXCEPTION
+  WHEN OTHERS THEN
     
     dbms_output.put_line('SQLERRM:    ' || sqlerrm);
     dbms_output.put_line('CALLSTACK:  ' || dbms_utility.format_call_stack);
     dbms_output.put_line('ERRORSTACK: ' || dbms_utility.format_error_stack);
     dbms_output.put_line('BACKTRACE:  ' || dbms_utility.format_error_backtrace);
     
-    if dbms_sql.is_open(lv_dbms_sql_cursor) then
+    IF dbms_sql.is_open(lv_dbms_sql_cursor) THEN
       dbms_sql.close_cursor(lv_dbms_sql_cursor);
-    end if;
+    END IF;
 
-    raise;
-end READ_TAB_WITH_LONG_COL_PTF;
+    RAISE;
+END read_tab_with_long_col_ptf;
 
 END IDMACS_WHERE_USED;
 /

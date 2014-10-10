@@ -173,52 +173,31 @@ UNION ALL SELECT
      *
      FROM text_datasource_cte
 )
+,all_text_cte(node_id,node_type,node_name,match_location,match_doucment) as (
 SELECT
-    node_type
-    ,node_id
-    ,NODE_NAME
-    -- TODO: The desired behavior is that a separate line is generated
-    -- for each match in the same document. Currently, the code will
-    -- generate single line FOR ALL matches. Multiple matches will be
-    -- concatenated.
-    ,DBMS_XMLGEN.CONVERT(
-        EXTRACT(NATIVE_XML
-              ,'descendant-or-self::text()[ora:contains(
-                  .
-                  , "YOUR_SEARCH_TERM_HERE"
-                  , "Z_IDMACS_POLICY"
-                  , "SYSTEM"
-                  ) > 0]
-              | //attribute::*[ora:contains(
-                  .
-                  , "YOUR_SEARCH_TERM_HERE"
-                  , "Z_IDMACS_POLICY"
-                  , "SYSTEM"
-                  ) > 0]
-              '
-              ,'xmlns:ora="http://xmlns.oracle.com/xdb"'
-            ).getClobVal()
+     node_id
+     ,node_type
+     ,NODE_NAME
+     ,DBMS_XMLGEN.CONVERT(
+        EXTRACT(MATCH_LOCATION,'.').getClobVal()
         , 1 --DBMS_XMLGEN.ENTITY_DECODE
-        ) as match_location
-    ,native_xml as match_document
-    from any_datasource_cte
-    where
-    existsNode(
-        NATIVE_XML
-              ,'descendant-or-self::text()[ora:contains(
-                  .
-                  , "YOUR_SEARCH_TERM_HERE"
-                  , "Z_IDMACS_POLICY"
-                  , "SYSTEM"
-                  ) > 0]
-              | //attribute::*[ora:contains(
-                  .
-                  , "YOUR_SEARCH_TERM_HERE"
-                  , "Z_IDMACS_POLICY"
-                  , "SYSTEM"
-                  ) > 0]
-              '
-              ,'xmlns:ora="http://xmlns.oracle.com/xdb"'
-    ) = 1
-    ORDER BY NODE_TYPE,NODE_ID
-    ;
+     ) as match_location
+     ,native_xml
+     FROM any_datasource_cte
+     ,xmltable('
+         for $t in ( $native_xml//attribute::*
+                    ,$native_xml/descendant-or-self::text())
+         return $t
+     ' 
+     PASSING NATIVE_XML AS "native_xml"
+     COLUMNS "MATCH_LOCATION"  XMLType PATH '.'
+     )
+)
+SELECT * 
+    FROM ALL_TEXT_CTE
+    WHERE IDMACS_WHERE_USED.CLOB_CONTAINS(
+        MATCH_LOCATION
+        , 'YOUR_SEARCH_TERM_HERE'
+    ) > 0
+    ORDER BY NODE_TYPE, NODE_ID
+;

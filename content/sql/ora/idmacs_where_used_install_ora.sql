@@ -101,7 +101,7 @@ CREATE OR REPLACE TYPE BODY "IDMACS_CLOB_OBJ"
           );
           exit when lv_long_len = 0;
 
-	  dbms_lob.append(node_data, lv_long_val);
+	        dbms_lob.append(node_data, lv_long_val);
           lv_cur_pos := lv_cur_pos + lv_long_len;
       end loop;
 
@@ -163,7 +163,84 @@ END IDMACS_WHERE_USED;
 
   CREATE OR REPLACE PACKAGE BODY "IDMACS_WHERE_USED" 
     AS
-  
+  /**
+   * Private function VARCHAR2_CONTAINS
+   *
+   * @param IV_STRING string to test
+   * @param IV_SUBSTR substring to test for
+   * @return 1 if IV_STRING contains IV_SUBSTR, 0 otherwise
+   */
+   FUNCTION VARCHAR2_CONTAINS(
+       IV_STRING VARCHAR2
+       ,IV_SUBSTR VARCHAR2
+   )
+   RETURN integer
+   AS 
+       lv_result integer;
+   BEGIN
+       SELECT XMLCAST(
+           XMLQUERY('
+               let $lv_result := contains($iv_string, $iv_substr)
+               return $lv_result
+               '
+               PASSING 
+                   IV_STRING  AS "iv_string"
+                   ,IV_SUBSTR AS "iv_substr"
+               RETURNING CONTENT
+           --xs:boolean(true) is cast to 1
+           --xs:boolean(false) is cast to 0
+           ) AS integer) INTO LV_RESULT
+           FROM DUAL
+           ;
+
+       return lv_result;
+  END VARCHAR2_CONTAINS;
+  /**
+   * Private function CLOB_CONTAINS
+   *
+   * @param IV_STRING string to test
+   * @param IV_SUBSTR substring to test for
+   * @return 1 if IV_STRING contains IV_SUBSTR, 0 otherwise
+   */
+   FUNCTION clob_CONTAINS(
+       IV_STRING clob
+       ,IV_SUBSTR VARCHAR2
+   )
+   RETURN integer
+   AS 
+      -- Initialize result to false (0), so a zero-length input
+      -- IV_STRING will always return false. This is consistent
+      -- with VARCHAR2_CONTAINS and XQuery fn:contains().
+      LV_RESULT               integer     := 0;
+      lv_string               VARCHAR2(2000 char);
+      lv_num_chars_to_read    PLS_INTEGER := 0;
+      lv_offset               PLS_INTEGER := 1;
+      lv_num_chars_remaining  PLS_INTEGER := 0;
+  BEGIN
+      lv_num_chars_remaining := LENGTH(iv_string) - lv_offset + 1;
+     
+      WHILE lv_num_chars_remaining > 0 LOOP
+     
+      lv_num_chars_to_read := LEAST(lv_num_chars_remaining, 2000);
+     
+      LV_STRING := DBMS_LOB.SUBSTR(
+          iv_string --CLOB, so returned datatype is VARCHAR2
+          ,lv_num_chars_to_read
+          ,LV_OFFSET
+      );
+     
+      lv_offset := lv_offset + lv_num_chars_to_read;
+     
+      lv_num_chars_remaining
+          := lv_num_chars_remaining - lv_num_chars_to_read;
+                                     
+        LV_RESULT := VARCHAR2_CONTAINS(LV_STRING, IV_SUBSTR);
+        exit when lv_result = 1;
+      END LOOP;
+     
+      RETURN lv_result;
+  END clob_CONTAINS;
+   
   /**
    * Private procedure VALIDATE_COLUMN_NAME
    *
@@ -204,13 +281,13 @@ END IDMACS_WHERE_USED;
         iv_base64 IN CLOB
     )
     RETURN CLOB AS
-      lv_result               CLOB;
-      lv_substring            VARCHAR2(2000);
+      LV_RESULT               CLOB;
+      lv_substring            VARCHAR2(2000 char);
       lv_num_chars_to_read    PLS_INTEGER := 0;
       lv_offset               PLS_INTEGER := 1;
       lv_num_chars_remaining  PLS_INTEGER := 0;
   BEGIN
-      lv_num_chars_remaining := LENGTH(iv_base64) - lv_offset;
+      lv_num_chars_remaining := LENGTH(iv_base64) - lv_offset + 1;
      
       WHILE lv_num_chars_remaining > 0 LOOP
      

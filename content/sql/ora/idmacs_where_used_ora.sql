@@ -33,7 +33,7 @@
 WITH text_datasource_cte(node_id,node_type,node_name,native_xml) AS (
 SELECT
      a.attr_id
-     ,'A'-- Attribute
+     ,'A' -- Attribute
      ,a.attrname
      ,   xmlelement(
             NAME "ATTRIBUTE_S"
@@ -66,7 +66,7 @@ SELECT
      FROM mxiv_allattributes a
 UNION ALL SELECT
     t.taskid
-    ,'T'-- Task
+    ,'T' -- Task
     ,t.taskname
         ,xmlelement(
             NAME "TASK_S"
@@ -108,7 +108,7 @@ UNION ALL SELECT
 SELECT
     scriptid
     ,'S' -- Global script
-    ,cast(scriptname as varchar2(2000)) --TODO: consistent length
+    ,cast(scriptname as VARCHAR2(2000)) -- TODO: consistent length
     ,scriptdefinition
     ,0
     FROM mc_global_scripts
@@ -120,12 +120,11 @@ UNION ALL SELECT
     ,1
     FROM table(
         idmacs_where_used.read_tab_with_long_col_ptf(
-            'MC_JOBS'
-            ,'JOBID'
-            ,'NAME'
-            ,'JOBDEFINITION'
+            'MC_JOBS'        --iv_tab_name
+            ,'JOBID'         --iv_id_column_name
+            ,'NAME'          --iv_name_colun_name
+            ,'JOBDEFINITION' --iv_long_column_name
         )
-    
     )
 )
 ,b64_enc_cte(node_id, node_type, node_name, b64_enc,is_xml) AS (
@@ -134,11 +133,13 @@ SELECT
     ,node_type
     ,node_name
     -- SUBSTR returns datatype of arg1 (CLOB in this case)
-    ,SUBSTR(b64_enc_prefix
-             -- LENGTH accepts CHAR, VARCHAR2, NCHAR, NVARCHAR2,
-	     -- CLOB, or NCLOB
-            ,LENGTH('{B64}') + 1
-            ,LENGTH(b64_enc_prefix) - LENGTH('{B64}')
+    ,substr(
+        -- CLOB, so return value will be CLOB
+        b64_enc_prefix
+        -- LENGTH accepts CHAR, VARCHAR2, NCHAR,
+	-- NVARCHAR2,CLOB, or NCLOB
+        ,length('{B64}') + 1
+        ,length(b64_enc_prefix) - length('{B64}')
     )
     ,is_xml
     FROM b64_enc_prefix_cte
@@ -152,52 +153,54 @@ SELECT
     ,is_xml
     FROM b64_enc_cte
 )
-,b64_datasource_cte(node_id,node_type,node_name,native_xml) AS (
+,b64_datasource_cte(node_id, node_type, node_name, native_xml) AS (
 SELECT
     node_id
     ,node_type
     ,node_name
     ,CASE is_xml
-            WHEN 1 THEN XMLPARSE(DOCUMENT b64_dec)
-            --TODO: this generates the CDATA section verbatim,
-            --which differs from the behavior on DB/2
-            ELSE sys_xmlgen(xmlcdata(b64_dec))
-        END
-        FROM b64_dec_cte
+        WHEN 1 THEN xmlparse(DOCUMENT b64_dec)
+        -- TODO: this generates the CDATA section verbatim,
+        -- which differs from the behavior on DB/2
+        ELSE sys_xmlgen(xmlcdata(b64_dec))
+    END
+    FROM b64_dec_cte
 )
-,any_datasource_cte(node_id,node_type,node_name,native_xml) AS (
+,any_datasource_cte(node_id, node_type, node_name, native_xml) AS (
 SELECT
      *
-     from b64_datasource_cte
+     FROM b64_datasource_cte
 UNION ALL SELECT
      *
      FROM text_datasource_cte
 )
-,all_text_cte(node_id,node_type,node_name,match_location,match_doucment) as (
+,all_text_cte(node_id, node_type, node_name, match_location, match_doucment) AS (
 SELECT
-     node_id
-     ,node_type
-     ,NODE_NAME
-     ,DBMS_XMLGEN.CONVERT(
-        EXTRACT(MATCH_LOCATION,'.').getClobVal()
-        , 1 --DBMS_XMLGEN.ENTITY_DECODE
-     ) as match_location
-     ,native_xml
-     FROM any_datasource_cte
-     ,xmltable('
-         for $t in ( $native_xml//attribute::*
-                    ,$native_xml/descendant-or-self::text())
-         return $t
-     ' 
-     PASSING NATIVE_XML AS "native_xml"
-     COLUMNS "MATCH_LOCATION"  XMLType PATH '.'
-     )
+    node_id
+    ,node_type
+    ,node_name
+    ,dbms_xmlgen.convert(
+        extract(match_location,'.').getCLOBVal()
+        , 1 -- value of dbms_xmlgen.entity_decode
+    ) AS match_location
+    ,native_xml
+
+    FROM any_datasource_cte
+    ,xmltable('
+        for $t in ( $native_xml//attribute::*
+                   ,$native_xml/descendant-or-self::text())
+        return $t
+        ' 
+        PASSING native_xml AS "native_xml"
+        COLUMNS match_location XMLType PATH '.'
+    )
 )
-SELECT * 
-    FROM ALL_TEXT_CTE
-    WHERE IDMACS_WHERE_USED.CLOB_CONTAINS(
-        MATCH_LOCATION
+SELECT
+    * 
+    FROM all_text_cte
+    WHERE idmacs_where_used.clob_contains(
+        match_location
         , 'YOUR_SEARCH_TERM_HERE'
     ) > 0
-    ORDER BY NODE_TYPE, NODE_ID
+    ORDER BY node_type, node_id
 ;

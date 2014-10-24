@@ -30,43 +30,69 @@
 -- TODO:
 -- * Documentation
 -- *******************************************************************
-with text_datasource_cte(node_id,node_type,node_name,native_xml) as ( 
+with text_datasource_cte(node_id,node_type,node_name,native_xml) as (
 select
-     attr_id
+     a.attr_id
      ,'A'-- Attribute
-     ,attrname
-     ,(select sqlvalues for xml path)
-     from mxiv_schema with (nolock)
+     ,a.attrname
+     ,(select
+         a.attr_id         as "ATTR_ID"
+         ,a.attrname       as "ATTR_NAME"
+         ,a.info           as "INFO"
+         ,a.deltask        as "DELTASK"
+         ,a.modtask        as "MODTASK"
+         ,a.instask        as "INSTASK"
+         ,a.display_name   as "DISPLAY_NAME"
+         ,a.tooltip        as "TOOLTIP"
+         ,a.regexvalidate  as "REGEXVALIDATE"
+         ,a.sqlvalues      as "SQLVALUES"
+         ,a.sqlaccesstask  as "SQLACCESSTASK"
+         ,a.sqlvaluestable as "SQLVALUESTABLE"
+         ,a.sqlvaluesid    as "SQLVALUESID"
+         ,(select
+               v.attr_value as "ATTR_VALUE"
+               from mxi_attrvaluechoice v with (nolock)
+               where v.attr_id=a.attr_id
+               order by v.attr_value
+               for xml path('ATTR_VALUE_CHOICE_S')
+               ,root('ATTR_VALUE_CHOICE_T')
+               ,type)
+         for xml path('ATTRIBUTE_S')
+         ,type)
+     from mxiv_allattributes a with (nolock)
 
 union all select
      t.taskid
      ,'T'-- Task
      ,t.taskname
-     ,(select t.taskid
-              ,t.taskname
-              ,t.boolsql
-              ,(select ta.attr_id
-                       ,ta.attrname
-                       ,ta.sqlvalues
-                       from mxiv_taskattributes ta with (nolock)
-                       where ta.taskid=t.taskid
-                       order by ta.attr_id
-                       for xml path('taskattribute')
-                       ,root('taskattributes')
-                       ,type)
-              ,(select tx.sqlscript
-                       ,tx.targetsqlscript
-                       from mxpv_taskaccess tx with (nolock)
-                       where tx.taskid=t.taskid
-                       for xml path('taskaccess')
-                               ,root('taskaccesses')
-                               ,type)
-              order by t.taskid                               
-              for xml path('task')
-              -- result set will always contain one task only,
-              -- so let task be the root element, not tasks
-              --,root('tasks')
+     ,(select
+         t.taskid    as "TASKID"
+         ,t.taskname as "TASKNAME"
+         ,t.boolsql  as "BOOLSQL"
+         ,(select
+             ta.attr_id    as "ATTR_ID"
+             ,ta.attrname  as "ATTRNAME"
+             ,ta.sqlvalues as "SQLVALUES"
+             from mxiv_taskattributes ta with (nolock)
+             where ta.taskid=t.taskid
+             order by ta.attr_id
+             for xml path('TASK_ATTRIBUTE_S')
+             ,root('TASK_ATTRIBUTE_T')
+             ,type)
+          ,(select
+              tx.sqlscript        as "SQLSCRIPT"
+              ,tx.targetsqlscript as "TARGETSQLSCRIPT"
+              from mxpv_taskaccess tx with (nolock)
+              where tx.taskid=t.taskid
+              for xml path('TASK_ACCESS_S')
+              ,root('TASK_ACCESS_T')
               ,type)
+          order by t.taskid
+          for xml path('TASK_S')
+          -- result set will always contain one task only,
+          -- so let task be the root element, not tasks
+          --,root('tasks')
+          ,type)
      from mxpv_alltaskinfo t with (nolock)
 )
 ,b64_enc_prefix_cte(node_id, node_type, node_name, b64_enc_prefix,
@@ -146,9 +172,11 @@ select
      cross apply
      native_xml.nodes('
          for $t in (//attribute::*, /descendant-or-self::text())
-         where contains(upper-case($t), upper-case("YOUR_SEARCH_TERM_HERE"))
+         (: MSSQL2005, does not have fn:upper-case(), unfortunately :)
+         where contains($t, "mxi_AttrValueHelp")
+         (: where contains(upper-case($t), upper-case("sap_core_getdbtableprefix")) :)
          return if ($t instance of attribute()) then $t/..
          else $t
      ') as t(xml_sequence)
-     order by node_id,node_type
+     order by node_type,node_id
 ;

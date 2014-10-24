@@ -53,9 +53,8 @@ SELECT
                     ,a.sqlaccesstask
                     ,a.sqlvaluestable
                     ,a.sqlvaluesid)
-                    ,xmlelement(
-                        NAME "ATTRIBUTE_VALUE_CHOICE_T"
-                        ,(SELECT
+                    ,xmlforest(
+                        (SELECT
                             xmlagg(
                                 xmlelement(
                                     NAME "ATTRIBUTE_VALUE_CHOICE_S"
@@ -63,7 +62,8 @@ SELECT
                                         v.attr_value))
                             ORDER BY v.attr_value)
                         FROM mxi_attrvaluechoice v
-                        WHERE v.attr_id=a.attr_id))))
+                        WHERE v.attr_id=a.attr_id)
+                        AS "ATTRIBUTE_VALUE_CHOICE_T")))
          ,version '1.0')
      FROM mxiv_allattributes a
 UNION ALL SELECT
@@ -112,7 +112,7 @@ UNION ALL SELECT
 SELECT
     scriptid
     ,'S' -- Global script
-    --NODE_NAME length must be consistent with IDMACS_CLOB_OBJ.NODE_NAME
+    -- node_name length must be consistent with z_idmacs_clob_obj.node_name
     ,cast(scriptname as VARCHAR2(2000))
     ,scriptdefinition
     ,0

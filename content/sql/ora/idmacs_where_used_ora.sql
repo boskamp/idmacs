@@ -78,9 +78,8 @@ UNION ALL SELECT
                     t.taskid
                     ,t.taskname
                     ,t.boolsql)
-                ,xmlelement(
-                    NAME "TASK_ATTRIBUTE_T"
-                    ,(SELECT
+                ,xmlforest(
+                    (SELECT
                         xmlagg(
                             xmlelement(
                                 NAME "TASK_ATTRIBUTE_S"
@@ -90,10 +89,10 @@ UNION ALL SELECT
                                     ,ta.sqlvalues))
                             ORDER BY ta.attrname)
                         FROM mxiv_taskattributes ta
-                        WHERE ta.taskid=t.taskid))
-                ,xmlelement(
-                    NAME "TASK_ACCESS_T"
-                    ,(SELECT
+                        WHERE ta.taskid=t.taskid)
+                    AS "TASK_ATTRIBUTE_T")
+                ,xmlforest(
+                    (SELECT
                         xmlagg(
                             xmlelement(
                                 NAME "TASK_ACCESS_S"
@@ -104,7 +103,8 @@ UNION ALL SELECT
                             tx.sqlscript
                             ,tx.targetsqlscript)
                         FROM mxpv_taskaccess tx
-                        WHERE tx.taskid=t.taskid))))
+                        WHERE tx.taskid=t.taskid)
+                    AS "TASK_ACCESS_T")))
         ,version '1.0')
     FROM mxpv_alltaskinfo t     
 )     

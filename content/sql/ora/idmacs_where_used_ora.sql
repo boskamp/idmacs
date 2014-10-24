@@ -35,7 +35,8 @@ SELECT
      a.attr_id
      ,'A' -- Attribute
      ,a.attrname
-     ,   xmlelement(
+     ,xmlroot(
+         xmlelement(
             NAME "ATTRIBUTE_S"
             ,xmlconcat(
                 xmlforest(
@@ -62,13 +63,15 @@ SELECT
                                         v.attr_value))
                             ORDER BY v.attr_value)
                         FROM mxi_attrvaluechoice v
-                        WHERE v.attr_id=a.attr_id))))                    
+                        WHERE v.attr_id=a.attr_id))))
+         ,version '1.0')
      FROM mxiv_allattributes a
 UNION ALL SELECT
     t.taskid
     ,'T' -- Task
     ,t.taskname
-        ,xmlelement(
+    ,xmlroot(
+        xmlelement(
             NAME "TASK_S"
             ,xmlconcat(
                 xmlforest(
@@ -102,6 +105,7 @@ UNION ALL SELECT
                             ,tx.targetsqlscript)
                         FROM mxpv_taskaccess tx
                         WHERE tx.taskid=t.taskid))))
+        ,version '1.0')
     FROM mxpv_alltaskinfo t     
 )     
 ,b64_enc_prefix_cte(node_id, node_type, node_name, b64_enc_prefix, is_xml) AS (

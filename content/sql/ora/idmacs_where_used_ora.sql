@@ -120,7 +120,7 @@ UNION ALL SELECT
     ,node_data
     ,1
     FROM table(
-        idmacs_where_used.read_tab_with_long_col_ptf(
+        z_idmacs_where_used.read_tab_with_long_col_ptf(
             'MC_JOBS'        --iv_tab_name
             ,'JOBID'         --iv_id_column_name
             ,'NAME'          --iv_name_colun_name
@@ -150,7 +150,7 @@ SELECT
     node_id
     ,node_type
     ,node_name
-    ,idmacs_where_used.base64_decode(b64_enc)
+    ,z_idmacs_where_used.base64_decode(b64_enc)
     ,is_xml
     FROM b64_enc_cte
 )
@@ -199,7 +199,7 @@ SELECT
 SELECT
     * 
     FROM all_text_cte
-    WHERE idmacs_where_used.clob_contains(
+    WHERE z_idmacs_where_used.clob_contains(
         match_location
         , 'YOUR_SEARCH_TERM_HERE'
     ) > 0

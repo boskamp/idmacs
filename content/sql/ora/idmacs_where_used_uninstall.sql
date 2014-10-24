@@ -27,31 +27,9 @@
 -- OF THE POSSIBILITY OF SUCH DAMAGE.
 --
 -- *******************************************************************
--- Run this script as user SYSTEM to create a custom full text search
--- policy. This is required because the default policy doesn't
--- work with underscores as expected.
---
--- User MXMC_OPER doesn't seem to have the required permissions
--- for package CTX_DDL.
+-- TODO:
+-- * Documentation
 -- *******************************************************************
-BEGIN
-ctx_ddl.drop_policy('Z_IDMACS_POLICY');
-ctx_ddl.drop_preference('Z_IDMACS_LEXER');
-END;
-/
-
-BEGIN
-ctx_ddl.create_preference(preference_name => 'Z_IDMACS_LEXER'
-                          ,object_name => 'BASIC_LEXER');
-			  
-ctx_ddl.set_attribute(preference_name => 'Z_IDMACS_LEXER'
-                      ,attribute_name => 'printjoins'
-                      ,attribute_value => '_');
-END;
-/
-
-BEGIN
-ctx_ddl.create_policy(policy_name => 'Z_IDMACS_POLICY'                      
-                      ,lexer => 'Z_IDMACS_LEXER');
-END;
-/
+DROP PACKAGE z_idmacs_where_used;
+DROP TYPE z_idmacs_clob_tab;
+DROP TYPE z_idmacs_clob_obj;

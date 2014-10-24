@@ -156,13 +156,13 @@ SELECT
         WHEN 1 THEN XMLPARSE(DOCUMENT b64_dec PRESERVE WHITESPACE)
         ELSE XMLPARSE(DOCUMENT 
                       XMLCAST(XMLQUERY('xs:hexBinary($i)' 
-                                       PASSING CAST('<?xml version="1.0" encoding="UTF-8"?><root><![CDATA[' 
+                                       PASSING CAST('<?xml version="1.0" encoding="UTF-8"?><ROOT><![CDATA[' 
                                                     AS BLOB(2g)) 
                                        AS "i") 
                               AS BLOB(2g))
                       || b64_dec 
                       || XMLCAST(XMLQUERY('xs:hexBinary($i)' 
-                                          PASSING CAST(']]></root>' AS BLOB(2g)) 
+                                          PASSING CAST(']]></ROOT>' AS BLOB(2g)) 
                                           AS "i") 
                                  AS BLOB(2g))
                       PRESERVE WHITESPACE)
@@ -201,5 +201,5 @@ SELECT
      COLUMNS "MATCH_LOCATION"  CLOB(2G) PATH '.'
              ,"MATCH_DOCUMENT" XML PATH '/'
      )
-    ORDER BY node_id,node_type
+    ORDER BY node_type, node_id
 ;

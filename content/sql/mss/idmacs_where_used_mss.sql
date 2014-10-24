@@ -54,8 +54,8 @@ select
                from mxi_attrvaluechoice v with (nolock)
                where v.attr_id=a.attr_id
                order by v.attr_value
-               for xml path('ATTR_VALUE_CHOICE_S')
-               ,root('ATTR_VALUE_CHOICE_T')
+               for xml path('ATTRIBUTE_VALUE_CHOICE_S')
+               ,root('ATTRIBUTE_VALUE_CHOICE_T')
                ,type)
          for xml path('ATTRIBUTE_S')
          ,type)
@@ -172,9 +172,12 @@ select
      cross apply
      native_xml.nodes('
          for $t in (//attribute::*, /descendant-or-self::text())
-         (: MSSQL2005, does not have fn:upper-case(), unfortunately :)
-         where contains($t, "mxi_AttrValueHelp")
-         (: where contains(upper-case($t), upper-case("sap_core_getdbtableprefix")) :)
+         where contains(upper-case($t), upper-case("YOUR_SEARCH_TERM_HERE"))
+
+         (: If you are on MSSQL2005, you are limited to case-insensitive :)
+         (: search as this 2005 does not support fn:upper-case() yet.    :)
+         (: where contains($t, "YOUR_SEARCH_TERM_HERE")                  :)
+
          return if ($t instance of attribute()) then $t/..
          else $t
      ') as t(xml_sequence)

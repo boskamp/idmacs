@@ -163,7 +163,7 @@ SELECT
         WHEN 1 THEN xmlparse(DOCUMENT b64_dec)
         -- TODO: this generates the CDATA section verbatim,
         -- which differs from the behavior on DB/2
-        ELSE sys_xmlgen(b64_dec)
+        ELSE sys_xmlgen(b64_dec, XMLFormat(enclTag => 'ROOT'))
     END
     FROM b64_dec_cte
 )

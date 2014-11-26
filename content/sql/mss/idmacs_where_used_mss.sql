@@ -79,7 +79,7 @@
 --                       ]
 --
 --           Columns NODE_ID and NODE_NAME provide ID and name of the
---           SAP(R) designtime object. 
+--           SAP(R) IDM designtime object. 
 --           
 --           Their meaning depends on NODE_TYPE. If NODE_TYPE is 'A', 
 --           for instance, then NODE_ID is the ID of an Identity Store 

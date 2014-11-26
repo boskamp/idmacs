@@ -38,20 +38,19 @@
 --           and IBM(R) DB/2.
 --   
 -- Usage:    Connect to your database as admin (MXMC_ADMIN) or oper
---           user (MXMC_OPER) to execute this query. Admin user will
---           not find any matches in stored procedures, though. 
---           Only oper user will find matches anywhere.
+--           user (MXMC_OPER) to execute this query. Using the admin 
+--           user will search anywhere except in stored procedures.
+--           In the rare case you need to include these, use oper.
 --
 --           Other standard SAP(R) IDM database users do not have
 --           sufficient permissions to execute this query, by default.
 --           
---           Before executing the query, replace the example string 
---           YOUR_SEARCH_TERM_HERE near the very end of this query's
---           source code with the actual string you would like
---           to search for. 
+--           Before execution, replace the example string 
+--           YOUR_SEARCH_TERM_HERE near the very bottom of this file
+--           with the actual string you would like to search for. 
 --
---           To search for all occurences of the attribute name 
---           MX_DISABLED, for example, the code should look like:
+-- Example:  To search for all occurences of the attribute name 
+--           MX_DISABLED, the code near the end should look like:
 --
 --           where contains(upper-case($t),upper-case("MX_DISABLED"))
 --
@@ -151,7 +150,7 @@
 --           it is an artifical XML representation generated on the
 --           fly from the corresponding relational tables, e.g. 
 --           from table MXI_ATTRIBUTES for Identity Store attributes.
---           Do not assume this XML structure to remain stable. It's
+--           Do not assume this XML structure to remain stable. Its
 --           sole purpose is to provide a basis for generic substring
 --           search via XQuery in all content.
 --

@@ -31,6 +31,11 @@
 -- *******************************************************************
 -- Synopsis: Query to find occurences of a given string inside
 --           an SAP(R) Identity Management (IDM) designtime model.
+--
+--           THIS IS THE VERSION FOR MICROSOFT(R) SQL SERVER.
+--
+--           Other versions exist for Oracle(R) Database 
+--           and IBM(R) DB/2.
 --   
 -- Usage:    Connect to your database as admin (MXMC_ADMIN) or oper
 --           user (MXMC_OPER) to execute this query. Admin user will
@@ -45,11 +50,17 @@
 --           source code with the actual string you would like
 --           to search for. 
 --
---           If you would like to search for occurences of the string
+--           To search for all occurences of the attribute name 
 --           MX_DISABLED, for example, the code should look like:
 --
 --           where contains(upper-case($t),upper-case("MX_DISABLED"))
 --
+--           Search is CASE-INSENSITIVE and uses SUBSTRING MATCHING,
+--           so the above query would match, for example:
+--
+--           * MX_DISABLED
+--           * mx_disabled
+--           * custom_Mx_Disabled
 -- *******************************************************************
 --           Q U I C K   S T A R T    (<<< ...to here. Thank you!)
 -- *******************************************************************
@@ -59,7 +70,7 @@
 --           1. NODE_TYPE           : char(1)
 --           2. NODE_ID             : int
 --           3. NODE_NAME           : varchar(max)
---           4. MATCH_LOCATION_XML  : xml
+--           4. MATCH_LOCATION_XML  : xml (MSSQL only)
 --           5. MATCH_LOCATION_TEXT : varchar(max)
 --           6. MATCH_DOCUMENT      : xml
 --
@@ -75,7 +86,7 @@
 --                       | 'T' -- Task
 --                       | 'S' -- Global Script
 --                       | 'J' -- Job
---                       | 'P' -- Stored Procedure
+--                       | 'P' -- Stored Procedure (MSSQL only)
 --                       ]
 --
 --           Columns NODE_ID and NODE_NAME provide ID and name of the
@@ -111,8 +122,8 @@
 --           the matching text wrapped into an artifical XML processing 
 --           instruction, looking  like <?X ... ?> . For this reason,
 --           the column value will contain an extra four characters at 
---           the beginning and an additional extra three at the end 
---           which do not reflect real content from the database.
+--           the beginning and an extra three at the end which are not 
+--           actual content from the database.
 -- 
 --           This specific XML representation is chosen for usability in 
 --           Microsoft (R) SQL Server Management Studio (SSMS) only.
@@ -129,27 +140,27 @@
 --           the complete column value in SSMS.
 --
 --           Column MATCH_DOCUMENT is the complete SAP(R) IDM designtime 
---           object that contains the content of MACH_LOCATION_*.
+--           object that contains the content of MATCH_LOCATION_*.
 --
 --           In the case of SAP(R) IDM jobs (NODE_TYPE='J'), this is the 
 --           complete job definition as stored in MC_JOBS.JOB_DEFINITION, 
---           just BASE64 decoded. In this case, the structure of the XML
---           is defined by SAP(R).
+--           just BASE64 decoded. In this case, the XML structure of
+--           MATCH_DOCUMENT is defined by SAP(R) IDM.
 --
 --           For all other types of SAP(R) IDM designtime objects,
 --           it is an artifical XML representation generated on the
 --           fly from the corresponding relational tables, e.g. 
---           from table MXI_ATTRIBUTES and others for Identity Store 
---           attributes. 
+--           from table MXI_ATTRIBUTES for Identity Store attributes.
+--           Do not assume this XML structure to remain stable. It's
+--           sole purpose is to provide a basis for generic substring
+--           search via XQuery in all content.
 --
 --           Note that in the latter case, the XML representation 
---           typically does not contain all fields of the underlying 
---           table(s). The choice of fields is more or less arbitrary.
---           The XML typically contains only fields I personally ever
---           had a need to search in in practice. Your requirements 
---           may be different. To include more fields, you could extend
---           field lists SELECTed by the Common Table Expressions (CTE) 
---           at the top of this query.
+--           typically does not contain all columns of the underlying 
+--           table(s). The choice of columns is more or less arbitrary.
+--           To include more fields, you could extend the column lists 
+--           SELECTed by the Common Table Expressions (CTE) at the top 
+--           of this query.
 --
 -- Bugs:     Specifically for global scripts, this query will report 
 --           ONLY ONE matching location, even when the script contains 
@@ -159,8 +170,7 @@
 --           search string, it's often required to open the content of 
 --           MATCH_DOCUMENT in a separate window via hyperlink, and 
 --           then do an SSMS "Quick Find..." (Ctrl+F) there to step 
---           through all occurences of your search string within a
---           a single SAP(R) IDM designtime object.
+--           through all occurences within this MATCH_DOCUMENT.
 -- *******************************************************************
 with text_datasource_cte(node_id,node_type,node_name,native_xml) as (
 select
@@ -268,29 +278,29 @@ select
      ,node_type
      ,node_name
      -- Casting to varchar(max) before applying substring
-     -- is required, otherwise log_data will be truncated
+     -- is required, otherwise B64_ENC_PREFIX will be truncated
      -- to 8000 bytes.
      ,substring(
          cast(b64_enc_prefix as varchar(max))
          ,len('{B64}') + 1
-         ,DATALENGTH(b64_enc_prefix) - len('{B64}')
+         ,datalength(b64_enc_prefix) - len('{B64}')
      )
      ,is_xml
      from b64_enc_prefix_cte
 )
 ,b64_dec_cte(node_id,node_type,node_name,b64_dec,is_xml) as (
-SELECT
+select
      node_id
      ,node_type
      ,node_name
      ,cast(
-         CAST(N'' AS XML).value(
+         cast(N'' AS XML).value(
              'xs:base64Binary(sql:column("B64_ENC"))'
              ,'VARBINARY(MAX)'
          )
      as varchar(max))
      ,is_xml
-     FROM b64_enc_cte
+     from b64_enc_cte
 )
 ,b64_datasource_cte(node_id,node_type,node_name,native_xml) as (
 select

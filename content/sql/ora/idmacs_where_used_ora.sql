@@ -318,4 +318,3 @@ SELECT
     ) > 0
     ORDER BY node_type, node_id
 ;
-

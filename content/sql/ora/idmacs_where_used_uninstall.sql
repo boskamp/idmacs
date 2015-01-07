@@ -33,3 +33,5 @@
 DROP PACKAGE z_idmacs_where_used;
 DROP TYPE z_idmacs_clob_tab;
 DROP TYPE z_idmacs_clob_obj;
+-- Replace mxmc728 with your DB table prefix
+DROP SYNONYM mxmc728_admin.z_idmacs_where_used;

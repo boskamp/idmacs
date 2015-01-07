@@ -205,7 +205,8 @@ SELECT
     FROM all_text_cte
     WHERE z_idmacs_where_used.clob_contains(
         match_location
-        , 'YOUR_SEARCH_TERM_HERE'
+        , 'YOUR_SEARCH_TERM_HERE''
     ) > 0
     ORDER BY node_type, node_id
 ;
+

@@ -36,6 +36,7 @@
 --------------------------------------------------------
 CREATE OR REPLACE
     TYPE z_idmacs_clob_obj
+    AUTHID CURRENT_USER
     AS OBJECT (
   
     node_id    NUMBER(10,0)
@@ -145,7 +146,12 @@ END;
 --------------------------------------------------------
 --  DDL for Type z_idmacs_clob_tab
 --------------------------------------------------------
-CREATE OR REPLACE TYPE z_idmacs_clob_tab
+CREATE OR REPLACE TYPE Z_IDMACS_CLOB_TAB
+    -- =================================================
+    -- Specifying an invoker_rights_clause doesn't seem
+    -- to work for anything other than OBJECT types
+    -- =================================================
+    -- AUTHID CURRENT_USER
     AS
     TABLE OF z_idmacs_clob_obj;
 /
@@ -259,7 +265,7 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
                     ,lv_offset
                 );
 
-	        -- TODO: adapt offset computation so that matches across
+                -- TODO: adapt offset computation so that matches across
                 -- buffer boundary work as well; right now, they're not found
                 lv_offset := lv_offset + lv_num_chars_to_read;
      
@@ -298,28 +304,41 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
         ,iv_col_name IN VARCHAR2
     )
     AS
-        lv_count integer;
+        lv_count INTEGER;
     BEGIN
+        -- ============================================================
+        -- UNCOMMENT FOR DEBUGGING ONLY
+        -- and ensure buffer for DBMS output is large enough
+        -- ============================================================   
+        -- dbms_output.put_line('Current schema is ' 
+        --    || sys_context('userenv', 'current_schema'));
+        -- ============================================================   
+    
         SELECT count(*) INTO lv_count
-            FROM user_tables
+	    -- user_tables would only work when this code is executed
+	    -- by the table owner (OPER user)
+            FROM all_tables
             WHERE table_name = iv_tab_name
             ;
         IF lv_count = 0 THEN
             raise_application_error(
                 -20010
-                ,'Not a valid table name: '||iv_tab_name
+                ,'Z_IDMACS_WHERE_USED: Not a valid table name: '
+		||iv_tab_name
             );
         END IF;
 
-	SELECT count(*) INTO lv_count
-            FROM user_tab_cols
+          SELECT count(*) INTO lv_count
+	    -- user_tab_cols would only work for OPER (see above)
+            FROM all_tab_cols
             WHERE table_name  = iv_tab_name
             AND   column_name = iv_col_name
             ;
         IF lv_count = 0 THEN
             raise_application_error(
                 -20011
-                ,'Not a valid column name: '||iv_col_name
+                ,'Z_IDMACS_WHERE_USED: Not a valid column name: '
+		||iv_col_name
             );
         END IF;
     END validate_table_column_name;
@@ -358,7 +377,7 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
                 || utl_raw.cast_to_varchar2(
                     utl_encode.base64_decode(
                         utl_raw.cast_to_raw(lv_substring)
-		    )
+                    )
             );
             END LOOP;
      
@@ -383,7 +402,7 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
         validate_table_column_name(iv_table_name, iv_id_column_name);
         validate_table_column_name(iv_table_name, iv_name_column_name);
         validate_table_column_name(iv_table_name, iv_long_column_name);
-   
+        
         lv_query :=
             'SELECT '
             || iv_id_column_name
@@ -446,5 +465,15 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
     END read_tab_with_long_col_ptf;
 
 END z_idmacs_where_used;
+/
+CREATE SYNONYM
+    -- Replace mxmc728 with your DB table prefix
+    mxmc728_admin.z_idmacs_where_used 
+    FOR mxmc728_oper.z_idmacs_where_used;
+
+GRANT EXECUTE
+    -- Replace mxmc728 with your DB table prefix
+    ON mxmc728_oper.z_idmacs_where_used 
+    TO mxmc728_admin;
 /
 

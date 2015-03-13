@@ -224,9 +224,12 @@ union all select
               tx.sqlscript        as "SQLSCRIPT"
               ,tx.targetsqlscript as "TARGETSQLSCRIPT"
               ,a.attrname         as "ATTRNAME"
+              ,ta.attrname        as "TARGETATTRNAME"
               from mxpv_taskaccess tx with (nolock)
               left outer join mxi_attributes a with (nolock)
               on tx.attr_id=a.attr_id
+              left outer join mxi_attributes ta with (nolock)
+              on tx.targetattr_id=ta.attr_id
               where tx.taskid=t.taskid
               for xml path('TASK_ACCESS_S')
               ,root('TASK_ACCESS_T')

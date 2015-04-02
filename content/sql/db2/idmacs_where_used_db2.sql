@@ -99,11 +99,23 @@ UNION ALL SELECT
                                 NAME "TASK_ACCESS_S"
                                 ,xmlforest(
                                     tx.sqlscript
-                                    ,tx.targetsqlscript))
+                                    ,tx.targetsqlscript
+                                    ,a.attrname         AS "ATTRNAME"
+                                    ,ta.attrname        AS "TARGETATTRNAME"
+                                    ,e.mcmskeyvalue     AS "MSKEYVALUE"
+                                    ,te.mcmskeyvalue    AS "TARGETMSKEYVALUE"))
                         ORDER BY
                             tx.sqlscript
                             ,tx.targetsqlscript)
                         FROM mxpv_taskaccess tx
+                        LEFT OUTER JOIN mxi_attributes a
+                        ON tx.attr_id=a.attr_id
+                        LEFT OUTER JOIN mxi_attributes ta
+                        ON tx.targetattr_id=ta.attr_id
+                        LEFT OUTER JOIN idmv_entry_simple e
+                        ON tx.mskey=e.mcmskey
+                        LEFT OUTER JOIN idmv_entry_simple te
+                        ON tx.targetmskey=te.mcmskey
                         WHERE tx.taskid=t.taskid)))))
     FROM mxpv_alltaskinfo t
 )
@@ -181,7 +193,7 @@ SELECT
      node_id
      ,node_type
      ,node_name
-     ,match_location
+     ,match_location_text
      ,match_document
      FROM any_datasource_cte
      ,xmltable('
@@ -198,8 +210,9 @@ SELECT
          (: return if($t/self::attribute()) then $t/.. else $t :) 
      ' 
      PASSING BY REF native_xml AS "native_xml"
-     COLUMNS "MATCH_LOCATION"  CLOB(2G) PATH '.'
+     COLUMNS "MATCH_LOCATION_TEXT"  CLOB(2G) PATH '.'
              ,"MATCH_DOCUMENT" XML PATH '/'
      )
     ORDER BY node_type, node_id
 ;
+

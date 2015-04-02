@@ -225,11 +225,17 @@ union all select
               ,tx.targetsqlscript as "TARGETSQLSCRIPT"
               ,a.attrname         as "ATTRNAME"
               ,ta.attrname        as "TARGETATTRNAME"
+              ,e.mcmskeyvalue     as "MSKEYVALUE"
+              ,te.mcmskeyvalue    as "TARGETMSKEYVALUE"
               from mxpv_taskaccess tx with (nolock)
               left outer join mxi_attributes a with (nolock)
               on tx.attr_id=a.attr_id
               left outer join mxi_attributes ta with (nolock)
               on tx.targetattr_id=ta.attr_id
+              left outer join idmv_entry_simple e with (nolock)
+              on tx.mskey=e.mcmskey
+              left outer join idmv_entry_simple te with (nolock)
+              on tx.targetmskey=te.mcmskey
               where tx.taskid=t.taskid
               for xml path('TASK_ACCESS_S')
               ,root('TASK_ACCESS_T')
@@ -370,3 +376,4 @@ select
      ') as t(xml_sequence)
      order by node_type,node_id
 ;
+

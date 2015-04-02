@@ -98,11 +98,24 @@ UNION ALL SELECT
                                 NAME "TASK_ACCESS_S"
                                 ,xmlforest(
                                     tx.sqlscript
-                                    ,tx.targetsqlscript))
+                                    ,tx.targetsqlscript
+                                    ,a.attrname         AS "ATTRNAME"
+                                    ,ta.attrname        AS "TARGETATTRNAME"
+                                    ,e.mcmskeyvalue     AS "MSKEYVALUE"
+                                    ,te.mcmskeyvalue    AS "TARGETMSKEYVALUE"))
                         ORDER BY
                             tx.sqlscript
                             ,tx.targetsqlscript)
                         FROM mxpv_taskaccess tx
+                        LEFT OUTER JOIN mxi_attributes a
+                        ON tx.attr_id=a.attr_id
+                        LEFT OUTER JOIN mxi_attributes ta
+                        ON tx.targetattr_id=ta.attr_id
+                        LEFT OUTER JOIN idmv_entry_simple e
+                        ON tx.mskey=e.mcmskey
+                        LEFT OUTER JOIN idmv_entry_simple te
+                        ON tx.targetmskey=te.mcmskey
+                        
                         WHERE tx.taskid=t.taskid)
                     AS "TASK_ACCESS_T")))
         ,version '1.0')
@@ -142,7 +155,7 @@ SELECT
         -- CLOB, so return value will be CLOB
         b64_enc_prefix
         -- LENGTH accepts CHAR, VARCHAR2, NCHAR,
-	-- NVARCHAR2,CLOB, or NCLOB
+        -- NVARCHAR2,CLOB, or NCLOB
         ,length('{B64}') + 1
         ,length(b64_enc_prefix) - length('{B64}')
     )
@@ -179,7 +192,7 @@ UNION ALL SELECT
      *
      FROM text_datasource_cte
 )
-,all_text_cte(node_id, node_type, node_name, match_location, match_doucment) AS (
+,all_text_cte(node_id, node_type, node_name, match_location_text, match_document) AS (
 SELECT
     node_id
     ,node_type
@@ -187,8 +200,8 @@ SELECT
     ,dbms_xmlgen.convert(
         extract(match_location,'.').getCLOBVal()
         , 1 -- value of dbms_xmlgen.entity_decode
-    ) AS match_location
-    ,native_xml
+    ) AS match_location_text
+    ,native_xml as match_document
 
     FROM any_datasource_cte
     ,xmltable('
@@ -204,8 +217,9 @@ SELECT
     * 
     FROM all_text_cte
     WHERE z_idmacs_where_used.clob_contains(
-        match_location
+        match_location_text
         , 'YOUR_SEARCH_TERM_HERE'
     ) > 0
     ORDER BY node_type, node_id
 ;
+

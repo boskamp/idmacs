@@ -27,149 +27,100 @@
 -- OF THE POSSIBILITY OF SUCH DAMAGE.
 --
 -- *******************************************************************
---           Q U I C K   S T A R T  (>>> Read at least from here...)
--- *******************************************************************
--- Synopsis: Query to find occurences of a given string inside
---           an SAP(R) Identity Management (IDM) designtime model.
+--
+-- Synopsis: Find any string in SAP(R) Identity Management (IDM)
+--           JavaScript or SQL source code, job definitions or tasks.
 --
 --           THIS IS THE VERSION FOR MICROSOFT(R) SQL SERVER.
 --
---           Other versions exist for Oracle(R) Database 
---           and IBM(R) DB/2.
+--           The most recent version of this file as well as
+--           versions for other databases can be found at GitHub:
+--
+--           https://github.com/boskamp/idmacs
 --   
--- Usage:    Connect to your database as admin (MXMC_ADMIN) or oper
---           user (MXMC_OPER) to execute this query. Using the admin 
---           user will search anywhere except in stored procedures.
---           In the rare case you need to include these, use oper.
+-- Usage:    1. Paste this source code into the SQL editor of any
+--              graphical SQL client that can display CLOB and/or
+--              XML data. Microsoft(R) SQL Server Management Studio,
+--              Oracle(R) SQL Developer and IBM(R) Data Studio are
+--              known to work fine. Others may work as well.
 --
---           Other standard SAP(R) IDM database users do not have
---           sufficient permissions to execute this query, by default.
---           
---           Before execution, replace the example string 
---           YOUR_SEARCH_TERM_HERE near the very bottom of this file
---           with the actual string you would like to search for. 
+--           2. In the SQL editor, replace YOUR_SEARCH_TERM_HERE
+--              near the end of the code with the string you want
+--              to search for. See also section "Example".
 --
--- Example:  To search for all occurences of the attribute name 
---           MX_DISABLED, the code near the end should look like:
+--           3. Execute the resulting query as ADMIN user (MXMC_ADMIN).
+--
+--           4. (Optional) Examine MATCH_LOCATION_* and MATCH_DOCUMENT
+--              values of the result set directly in the SQL client.
+--
+--           5. (Optional) Locate tasks or jobs corresponding to NODE_ID
+--              values from your result set using MMC's Find action.
+--              Make sure to check "Find Tasks or Jobs only"!
+--
+-- Example:  To search for all occurences of the string MX_DISABLED,
+--           the code near the end should look like:
 --
 --           where contains(upper-case($t),upper-case("MX_DISABLED"))
 --
 --           Search is CASE-INSENSITIVE and uses SUBSTRING MATCHING,
---           so the above query would match, for example:
+--           so this query would find any of the following strings,
+--           for instance:
 --
---           * MX_DISABLED
---           * mx_disabled
---           * custom_Mx_Disabled
--- *******************************************************************
---           Q U I C K   S T A R T    (<<< ...to here. Thank you!)
--- *******************************************************************
+--           MX_DISABLED
+--           mx_disabled
+--           #mx_disabled
+--
 -- Result:   The result set will list any locations that contain your
---           search string. It has the following row structure:
+--           search term. Its rows have the following structure:
 --
 --           1. NODE_TYPE           : char(1)
 --           2. NODE_ID             : int
 --           3. NODE_NAME           : varchar(max)
---           4. MATCH_LOCATION_XML  : xml (MSSQL only)
+--           4. MATCH_LOCATION_XML  : xml                 (MSSQL only)
 --           5. MATCH_LOCATION_TEXT : varchar(max)
 --           6. MATCH_DOCUMENT      : xml
 --
---           Multiple matching locations within the same SAP(R) IDM
---           designtime object will result in separate rows differing
---           only in their MATCH_LOCATION_* columns but otherwise
---           identical content.
---
---           The NODE_TYPE column specifies the type of SAP(R) IDM
---           designtime object the match has been found in:
---
---           NODE_TYPE = [ 'A' -- Identity Store Attribute
+--           NODE_TYPE = [ 'A' -- Attribute (Identity Store attribute)
 --                       | 'T' -- Task
---                       | 'S' -- Global Script
+--                       | 'S' -- Script (global script)
 --                       | 'J' -- Job
---                       | 'P' -- Stored Procedure (MSSQL only)
 --                       ]
---
---           Columns NODE_ID and NODE_NAME provide ID and name of the
---           SAP(R) IDM designtime object. 
---           
---           Their meaning depends on NODE_TYPE. If NODE_TYPE is 'A', 
---           for instance, then NODE_ID is the ID of an Identity Store 
---           attribute like in MXI_ATTRIBUTES.ATTR_ID.
 --
 --           NODE_ID   = [ attribute_id
 --                       | task_id
---                       | global_script_id
+--                       | script_id
 --                       | job_id
---                       | stored_procedure_id
 --                       ]
 --
 --           NODE_NAME = [ attribute_name
 --                       | task_name
---                       | global_script_name
+--                       | script_name
 --                       | job_name
---                       | stored_procedure_name
 --                       ]
 --
---           Column MATCH_LOCATION_XML contains one continuous
---           piece of text that contains your search string at least once.
+--           MATCH_LOCATION_XML is similar to MATCH_LOCATION_TEXT,
+--           just represented as XML to enable convenient hyperlink
+--           navigation in Microsoft(R) SQL Server Management Studio.
+--           This column exists in the MSSQL version only.
 --
---           Its value may, for instance, be the complete source code 
---           of a global script, or the complete content of the 
---           "SQL statement" input field on the "Source" tab of a 
---           single pass in an SAP(R) IDM job.
---  
---           In contrast to MATCH_LOCATION_TEXT, this column represents
---           the matching text wrapped into an artifical XML processing 
---           instruction, looking  like <?X ... ?> . For this reason,
---           the column value will contain an extra four characters at 
---           the beginning and an extra three at the end which are not 
---           actual content from the database.
--- 
---           This specific XML representation is chosen for usability in 
---           Microsoft (R) SQL Server Management Studio (SSMS) only.
+--           MATCH_LOCATION_TEXT is a piece of text contained in
+--           MATCH_DOCUMENT. This piece of text contains your search
+--           term at least once.
 --
---           You can click on the cell value's hyperlink in the result set 
---           to display the complete matching text in a new editor window.
---           Line breaks from the original text found in the database will
---           be preserved and displayed as expected.
+--           MATCH_DOCUMENT is an XML representation of the whole
+--           designtime object (attribute, task, script or job)
+--           identified by NODE_TYPE and NODE_ID.
 --
---           Column MATCH_LOCATION_TEXT is exactly the same content as
---           MATCH_LOCATION_XML, but as plain text exactly as found in
---           the database. The drawback of this representation is that
---           line breaks are lost, and it's less convenient to display 
---           the complete column value in SSMS.
+--           For MATCH_DOCUMENTs that contain your search term multiple
+--           times, the result set will generally contain multiple lines
+--           which differ only in their MATCH_LOCATION_* values.
 --
---           Column MATCH_DOCUMENT is the complete SAP(R) IDM designtime 
---           object that contains the content of MATCH_LOCATION_*.
+-- Credits:  Martin Smith http://stackoverflow.com/users/73226/martin-smith
+--           Thanks for explaining how to display large text in SSMS
 --
---           In the case of SAP(R) IDM jobs (NODE_TYPE='J'), this is the 
---           complete job definition as stored in MC_JOBS.JOB_DEFINITION, 
---           just BASE64 decoded. In this case, the XML structure of
---           MATCH_DOCUMENT is defined by SAP(R) IDM.
+--           Finn Ellebaek Nielsen https://ellebaek.wordpress.com
+--           Thanks for explaining how to convert LONG to CLOB on the fly
 --
---           For all other types of SAP(R) IDM designtime objects,
---           it is an artifical XML representation generated on the
---           fly from the corresponding relational tables, e.g. 
---           from table MXI_ATTRIBUTES for Identity Store attributes.
---           Do not assume this XML structure to remain stable. Its
---           sole purpose is to provide a basis for generic substring
---           search via XQuery in all content.
---
---           Note that in the latter case, the XML representation 
---           typically does not contain all columns of the underlying 
---           table(s). The choice of columns is more or less arbitrary.
---           To include more fields, you could extend the column lists 
---           SELECTed by the Common Table Expressions (CTE) at the top 
---           of this query.
---
--- Bugs:     Specifically for global scripts, this query will report 
---           ONLY ONE matching location, even when the script contains 
---           multiple matches.
---
---           If you're interested in finding ALL occurences of your 
---           search string, it's often required to open the content of 
---           MATCH_DOCUMENT in a separate window via hyperlink, and 
---           then do an SSMS "Quick Find..." (Ctrl+F) there to step 
---           through all occurences within this MATCH_DOCUMENT.
 -- *******************************************************************
 with text_datasource_cte(node_id,node_type,node_name,native_xml) as (
 select

@@ -27,8 +27,100 @@
 -- OF THE POSSIBILITY OF SUCH DAMAGE.
 --
 -- *******************************************************************
--- TODO:
--- * Documentation
+--
+-- Synopsis: Find any string in SAP(R) Identity Management (IDM)
+--           JavaScript or SQL source code, job definitions or tasks.
+--
+--           THIS IS THE VERSION FOR ORACLE(R) DATABASE.
+--
+--           The most recent version of this file as well as
+--           versions for other databases can be found at GitHub:
+--
+--           https://github.com/boskamp/idmacs
+--   
+-- Usage:    1. Paste this source code into the SQL editor of any
+--              graphical SQL client that can display CLOB and/or
+--              XML data. Microsoft(R) SQL Server Management Studio,
+--              Oracle(R) SQL Developer and IBM(R) Data Studio are
+--              known to work fine. Others may work as well.
+--
+--           2. In the SQL editor, replace YOUR_SEARCH_TERM_HERE
+--              near the end of the code with the string you want
+--              to search for. See also section "Example".
+--
+--           3. Execute the resulting query as ADMIN user (MXMC_ADMIN).
+--
+--           4. (Optional) Examine MATCH_LOCATION_* and MATCH_DOCUMENT
+--              values of the result set directly in the SQL client.
+--
+--           5. (Optional) Locate tasks or jobs corresponding to NODE_ID
+--              values from your result set using MMC's Find action.
+--              Make sure to check "Find Tasks or Jobs only"!
+--
+-- Example:  To search for all occurences of the string MX_DISABLED,
+--           the code near the end should look like:
+--
+--           where contains(upper-case($t),upper-case("MX_DISABLED"))
+--
+--           Search is CASE-INSENSITIVE and uses SUBSTRING MATCHING,
+--           so this query would find any of the following strings,
+--           for instance:
+--
+--           MX_DISABLED
+--           mx_disabled
+--           #mx_disabled
+--
+-- Result:   The result set will list any locations that contain your
+--           search term. Its rows have the following structure:
+--
+--           1. NODE_TYPE           : char(1)
+--           2. NODE_ID             : int
+--           3. NODE_NAME           : varchar(max)
+--           4. MATCH_LOCATION_XML  : xml                 (MSSQL only)
+--           5. MATCH_LOCATION_TEXT : varchar(max)
+--           6. MATCH_DOCUMENT      : xml
+--
+--           NODE_TYPE = [ 'A' -- Attribute (Identity Store attribute)
+--                       | 'T' -- Task
+--                       | 'S' -- Script (global script)
+--                       | 'J' -- Job
+--                       ]
+--
+--           NODE_ID   = [ attribute_id
+--                       | task_id
+--                       | script_id
+--                       | job_id
+--                       ]
+--
+--           NODE_NAME = [ attribute_name
+--                       | task_name
+--                       | script_name
+--                       | job_name
+--                       ]
+--
+--           MATCH_LOCATION_XML is similar to MATCH_LOCATION_TEXT,
+--           just represented as XML to enable convenient hyperlink
+--           navigation in Microsoft(R) SQL Server Management Studio.
+--           This column exists in the MSSQL version only.
+--
+--           MATCH_LOCATION_TEXT is a piece of text contained in
+--           MATCH_DOCUMENT. This piece of text contains your search
+--           term at least once.
+--
+--           MATCH_DOCUMENT is an XML representation of the whole
+--           designtime object (attribute, task, script or job)
+--           identified by NODE_TYPE and NODE_ID.
+--
+--           For MATCH_DOCUMENTs that contain your search term multiple
+--           times, the result set will generally contain multiple lines
+--           which differ only in their MATCH_LOCATION_* values.
+--
+-- Credits:  Martin Smith http://stackoverflow.com/users/73226/martin-smith
+--           Thanks for explaining how to display large text in SSMS
+--
+--           Finn Ellebaek Nielsen https://ellebaek.wordpress.com
+--           Thanks for explaining how to convert LONG to CLOB on the fly
+--
 -- *******************************************************************
 WITH text_datasource_cte(node_id,node_type,node_name,native_xml) AS (
 SELECT

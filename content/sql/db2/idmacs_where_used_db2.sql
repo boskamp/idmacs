@@ -134,6 +134,8 @@ SELECT
                 xmlforest(
                     a.attr_id
                     ,a.attrname
+		    ,a.is_id
+		    ,i.idstorename
                     ,a.info
                     ,a.deltask
                     ,a.modtask
@@ -157,6 +159,8 @@ SELECT
                         FROM mxi_attrvaluechoice v
                         WHERE v.attr_id=a.attr_id)))))                    
      FROM mxiv_allattributes a
+     INNER JOIN mxi_idstores i
+     ON a.is_id=i.is_id
 
 UNION ALL SELECT
     t.taskid

@@ -133,6 +133,8 @@ SELECT
             ,xmlconcat(
                 xmlforest(
                     a.attr_id
+		    ,a.is_id
+		    ,i.idstorename
                     ,a.attrname
                     ,a.info
                     ,a.deltask
@@ -158,6 +160,8 @@ SELECT
                         AS "ATTRIBUTE_VALUE_CHOICE_T")))
          ,version '1.0')
      FROM mxiv_allattributes a
+     INNER JOIN mxi_idstores i
+     ON a.is_id=i.is_id
 UNION ALL SELECT
     t.taskid
     ,'T' -- Task

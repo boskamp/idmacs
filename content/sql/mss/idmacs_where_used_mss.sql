@@ -129,6 +129,8 @@ select
      ,a.attrname
      ,(select
          a.attr_id         as "ATTR_ID"
+         ,a.is_id          as "IS_ID"
+         ,i.idstorename    as "IDSTORENAME"
          ,a.attrname       as "ATTR_NAME"
          ,a.info           as "INFO"
          ,a.deltask        as "DELTASK"
@@ -152,6 +154,8 @@ select
          for xml path('ATTRIBUTE_S')
          ,type)
      from mxiv_allattributes a with (nolock)
+     inner join mxi_idstores i with (nolock)
+     on a.is_id=i.is_id
 
 union all select
      t.taskid
@@ -327,4 +331,3 @@ select
      ') as t(xml_sequence)
      order by node_type,node_id
 ;
-

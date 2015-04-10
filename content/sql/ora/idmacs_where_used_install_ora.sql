@@ -361,7 +361,7 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
             raise_application_error(
                 -20010
                 ,'Z_IDMACS_WHERE_USED: Not a valid table name: '
-        ||iv_tab_name
+		||iv_tab_name
             );
         END IF;
 
@@ -375,7 +375,7 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
             raise_application_error(
                 -20011
                 ,'Z_IDMACS_WHERE_USED: Not a valid column name: '
-        ||iv_col_name
+		||iv_col_name
             );
         END IF;
     END validate_table_column_name;
@@ -508,12 +508,12 @@ END z_idmacs_where_used;
 /
 CREATE SYNONYM
     -- Replace MXMC with your DB table prefix
-    mxmc728_admin.z_idmacs_where_used 
+    mxmc_admin.z_idmacs_where_used 
     FOR mxmc728_oper.z_idmacs_where_used;
 
 GRANT EXECUTE
     -- Replace MXMC with your DB table prefix
-    ON mxmc728_oper.z_idmacs_where_used 
-    TO mxmc728_admin;
+    ON mxmc_oper.z_idmacs_where_used 
+    TO mxmc_admin;
 /
 

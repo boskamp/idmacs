@@ -211,7 +211,6 @@ UNION ALL SELECT
                         ON tx.mskey=e.mcmskey
                         LEFT OUTER JOIN idmv_entry_simple te
                         ON tx.targetmskey=te.mcmskey
-                        
                         WHERE tx.taskid=t.taskid)
                     AS "TASK_ACCESS_T")))
         ,version '1.0')
@@ -318,3 +317,4 @@ SELECT
     ) > 0
     ORDER BY node_type, node_id
 ;
+

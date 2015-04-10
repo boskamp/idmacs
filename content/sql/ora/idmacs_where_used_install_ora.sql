@@ -51,7 +51,7 @@ CREATE OR REPLACE
     )
     RETURN SELF AS RESULT
 
-  ,MEMBER PROCEDURE define_columns(iv_dbms_sql_cursor IN INTEGER)
+    ,MEMBER PROCEDURE define_columns(iv_dbms_sql_cursor IN INTEGER)
 );
 /
 
@@ -73,7 +73,7 @@ CREATE OR REPLACE
     /**
      * Constructs a new instance with values fetched from DBMS_SQL cursor
      *
-     * @param   iv_dbms_sql_cursor
+     * @param   IV_DBMS_SQL_CURSOR
      * @return  new object type instance
      */
     CONSTRUCTOR FUNCTION z_idmacs_clob_obj(
@@ -88,7 +88,7 @@ CREATE OR REPLACE
         dbms_sql.column_value(iv_dbms_sql_cursor, 1, node_id);
         dbms_sql.column_value(iv_dbms_sql_cursor, 2, node_name);
 
-        -- Create CLOB
+        -- Create CLOB that will not be cached and free'd after this call
         dbms_lob.createtemporary(node_data, FALSE, dbms_lob.call);
 
         -- Piecewise fetching of the LONG column into VARCHAR2 buffer
@@ -103,8 +103,9 @@ CREATE OR REPLACE
             );
             EXIT WHEN lv_bytes_returned = 0;
 
-            -- Append VARCHAR2 buffer to temporary CLOB
-            dbms_lob.append(node_data, lv_buf_val);
+            -- Concatentation operator vs. dbms_lob.append
+            -- performed the same in my tests on 11g
+            node_data := node_data || lv_buf_val;
             lv_offset := lv_offset + lv_bytes_returned;
         END LOOP;
 
@@ -113,7 +114,8 @@ CREATE OR REPLACE
 
     /**
      * Defines all columns in DBMS_SQL cursor
-     * @param  iv_dbms_sql_cursor parsed DBMS_SQL cursor
+     *
+     * @param  IV_DBMS_SQL_CURSOR    parsed DBMS_SQL cursor
      */
     MEMBER PROCEDURE define_columns(
         iv_dbms_sql_cursor IN INTEGER
@@ -161,14 +163,21 @@ CREATE OR REPLACE TYPE Z_IDMACS_CLOB_TAB
 --------------------------------------------------------
 CREATE OR REPLACE PACKAGE z_idmacs_where_used
     AUTHID CURRENT_USER
-    AS 
+    AS
 
     /**
      * Public function CLOB_CONTAINS
      *
-     * @param IV_STRING string to test
-     * @param IV_SUBSTR substring to test for
-     * @param IV_CASE_SENSITIVE 0 to ignore case, 1 to match case (default: 0)
+     * Test whether IV_SUBSTR is contained in IV_STRING,
+     * where IV_STRING is a CLOB. When IV_CASE_SENSITIVE
+     * is 0 (the default), this is the same as calling
+     * dbms_lob.instr(). Otherwise, a case-sensitive
+     * comparison is performed.
+     *
+     * @param IV_STRING            string to test
+     * @param IV_SUBSTR            substring to test for
+     * @param IV_CASE_SENSITIVE    0 to ignore case,
+     *                             1 to match case (default: 0)
      * @return 1 if IV_STRING contains IV_SUBSTR, 0 otherwise
      */
     FUNCTION clob_contains(
@@ -181,7 +190,13 @@ CREATE OR REPLACE PACKAGE z_idmacs_where_used
     /**
      * Public function BASE64_DECODE
      *
-     * TODO: documentation
+     * Special purpose BASE64 decoder which
+     * assumes that the result of decoding is
+     * not just any raw binary data, but charater-like
+     * data which can be represented as a CLOB.
+     *
+     * @param: IV_BASE64 encoded data
+     * @return decoded, character-like data
      */
     FUNCTION base64_decode(
         iv_base64 CLOB
@@ -189,9 +204,29 @@ CREATE OR REPLACE PACKAGE z_idmacs_where_used
     RETURN CLOB;
     
     /**
-     * Public function READ_TAB_WITH_LONG_COL_PFF
+     * Public function READ_TAB_WITH_LONG_COL_PTF
      *
-     * TODO: documentation
+     * Pipelined table function that reads from a source table
+     * specified in IV_TABLE_NAME and converts LONG data stored
+     * in column IV_LONG_COLUMN_NAME to CLOB on the fly.
+     *
+     * The table supplied in IV_TABLE_NAME must have one INT column
+     * containing a unique ID for each row.
+     * Provide the name of this column in IV_ID_COLUMN_NAME.
+     *
+     * Second, the table must have a char-like column containing
+     * a NAME for each row.
+     * Provide the name of this column in IV_NAME_COLUMN_NAME.
+     * 
+     * The combination of ID, NAME and CLOB data (converted from
+     * LONG) will be returned in a table whose rows have the
+     * object type Z_IDMACS_CLOB_TAB.
+     *
+     * @param IV_TABLE_NAME        table to read from
+     * @param IV_ID_COLUMN_NAME    ID column in table
+     * @param IV_NAME_COLUMN_NAME  name column in table
+     * @param IV_LONG_COLUMN_NAME  column in table with LONG data
+     * @return                     table of ID, name and CLOB data
      */
     FUNCTION read_tab_with_long_col_ptf(
         iv_table_name        VARCHAR2
@@ -209,6 +244,7 @@ END z_idmacs_where_used;
 --------------------------------------------------------
 CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
     AS
+
     /**
      * Private function VARCHAR2_CONTAINS
      *
@@ -315,8 +351,9 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
         -- ============================================================   
     
         SELECT count(*) INTO lv_count
-	    -- user_tables would only work when this code is executed
-	    -- by the table owner (OPER user)
+            -- Note that the view USER_TABLES would not work in general,
+            -- but only work when this code is executed by the table owner
+            -- (OPER user)
             FROM all_tables
             WHERE table_name = iv_tab_name
             ;
@@ -324,12 +361,12 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
             raise_application_error(
                 -20010
                 ,'Z_IDMACS_WHERE_USED: Not a valid table name: '
-		||iv_tab_name
+        ||iv_tab_name
             );
         END IF;
 
           SELECT count(*) INTO lv_count
-	    -- user_tab_cols would only work for OPER (see above)
+            -- USER_TAB_COLS would only work for OPER (see above)
             FROM all_tab_cols
             WHERE table_name  = iv_tab_name
             AND   column_name = iv_col_name
@@ -338,7 +375,7 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
             raise_application_error(
                 -20011
                 ,'Z_IDMACS_WHERE_USED: Not a valid column name: '
-		||iv_col_name
+        ||iv_col_name
             );
         END IF;
     END validate_table_column_name;
@@ -355,7 +392,10 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
         lv_num_chars_remaining  PLS_INTEGER := 0;
     BEGIN
         lv_num_chars_remaining := length(iv_base64) - lv_offset + 1;
-     
+
+        -- Create CLOB that will not be cached and free'd after this call
+        dbms_lob.createtemporary(lv_result, FALSE, dbms_lob.call);
+    
         WHILE lv_num_chars_remaining > 0 LOOP
      
             lv_num_chars_to_read := least(lv_num_chars_remaining, 2000);
@@ -370,15 +410,15 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
      
             lv_num_chars_remaining
                 := lv_num_chars_remaining - lv_num_chars_to_read;
-                                     
-            lv_result
-                := lv_result
-                --TODO: use dbms_lob.append instead of ||
-                || utl_raw.cast_to_varchar2(
+
+            -- Concatentation operator vs. dbms_lob.append
+            -- performed the same in my tests on 11g
+            lv_result := lv_result || utl_raw.cast_to_varchar2(
                     utl_encode.base64_decode(
                         utl_raw.cast_to_raw(lv_substring)
                     )
             );
+        
             END LOOP;
      
         RETURN lv_result;
@@ -467,12 +507,12 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
 END z_idmacs_where_used;
 /
 CREATE SYNONYM
-    -- Replace mxmc728 with your DB table prefix
+    -- Replace MXMC with your DB table prefix
     mxmc728_admin.z_idmacs_where_used 
     FOR mxmc728_oper.z_idmacs_where_used;
 
 GRANT EXECUTE
-    -- Replace mxmc728 with your DB table prefix
+    -- Replace MXMC with your DB table prefix
     ON mxmc728_oper.z_idmacs_where_used 
     TO mxmc728_admin;
 /

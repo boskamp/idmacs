@@ -34,7 +34,7 @@
 --
 --           [1] idmacs_where_used_install_ora.sql
 --           [2] idmacs_where_used_ora.sql
---           [3] idmacs_where_used_uinstall_ora.sql (THIS FILE)
+--           [3] idmacs_where_used_uninstall_ora.sql (THIS FILE)
 --
 --           ALL OF THESE FILES ARE SPECIFIC TO ORACLE(R) DATABASE.
 --

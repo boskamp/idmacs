@@ -27,8 +27,37 @@
 -- OF THE POSSIBILITY OF SUCH DAMAGE.
 --
 -- *******************************************************************
--- TODO:
--- * Documentation
+--
+-- Synopsis: INSTALL a where-used query for use with SAP(R) IDM.
+--
+--           This is one of three related files:
+--
+--           [1] idmacs_where_used_install_ora.sql  (THIS FILE)
+--           [2] idmacs_where_used_ora.sql
+--           [3] idmacs_where_used_uinstall_ora.sql
+--
+--           ALL OF THESE FILES ARE SPECIFIC TO ORACLE(R) DATABASE.
+--
+--           The most recent versions of these files, as well as
+--           versions for other databases, can be found at GitHub:
+--
+--           https://github.com/boskamp/idmacs
+--   
+-- Usage:    1. If you have run this script before
+--              and wish to update an existing installation,
+--              YOU MUST RUN THE UNINSTALLER [3] FIRST.
+--
+--           2. If SAP(R) IDM has been installed with a database prefix
+--              other than the default "MXMC", replace all occurrences
+--              of "MXMC" in this script with your actual DB prefix.
+--
+--           3. Use any SQL client, such as Oracle(R) SQL Developer,
+--              to connect to the SAP(R) IDM database and execute this
+--              script as OPER user (MXMC_OPER, by default).
+--
+-- Result:   You can now run the where-used query [2] for use with
+--           SAP(R) IDM as ADMIN user (MXMC_ADMIN, by default).
+--
 -- *******************************************************************
 
 --------------------------------------------------------
@@ -506,7 +535,7 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
 
 END z_idmacs_where_used;
 /
-CREATE SYNONYM
+CREATE OR REPLACE SYNONYM
     -- Replace MXMC with your DB table prefix
     mxmc728_admin.z_idmacs_where_used 
     FOR mxmc728_oper.z_idmacs_where_used;

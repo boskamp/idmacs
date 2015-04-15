@@ -28,7 +28,7 @@
 --
 -- *******************************************************************
 --
--- Synopsis: UNINSTALL a where-used query for use with SAP(R) IDM.
+-- Synopsis: UNINSTALL where-used query for use with SAP(R) IDM.
 --
 --           This is one of three related files:
 --

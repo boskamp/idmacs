@@ -59,14 +59,14 @@
 --
 --           4. Execute the resulting query as ADMIN user (MXMC_ADMIN).
 --
---           5. (Optional) Examine MATCH_LOCATION_* and MATCH_DOCUMENT
+--           5. (Optional) Examine MATCH_LOCATION_TEXT and MATCH_DOCUMENT
 --              values of the result set directly in the SQL client.
 --
 --           6. (Optional) Locate tasks or jobs corresponding to NODE_ID
 --              values from your result set using MMC's Find action.
 --              Make sure to check "Find Tasks or Jobs only"!
 --
--- Example:  To search for all occurences of the string MX_DISABLED,
+-- Example:  To search for all occurrences of the string MX_DISABLED,
 --           the code near the end should look like:
 --
 --           WHERE z_idmacs_where_used.clob_contains(
@@ -119,7 +119,7 @@
 --
 --           For MATCH_DOCUMENTs that contain your search term multiple
 --           times, the result set will generally contain multiple lines
---           which differ only in their MATCH_LOCATION_* values.
+--           which differ only in their MATCH_LOCATION_TEXT values.
 --
 -- Credits:  Martin Smith http://stackoverflow.com/users/73226/martin-smith
 --           Thanks for explaining how to display large text in SSMS

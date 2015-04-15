@@ -28,7 +28,7 @@
 --
 -- *******************************************************************
 --
--- Synopsis: INSTALL a where-used query for use with SAP(R) IDM.
+-- Synopsis: INSTALL where-used query for use with SAP(R) IDM.
 --
 --           This is one of three related files:
 --

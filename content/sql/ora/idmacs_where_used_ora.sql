@@ -59,7 +59,11 @@
 --
 --           4. Execute the resulting query as ADMIN user (MXMC_ADMIN).
 --
+<<<<<<< HEAD
 --           5. (Optional) Examine MATCH_LOCATION_TEXT and MATCH_DOCUMENT
+=======
+--           5. (Optional) Examine MATCH_LOCATION_* and MATCH_DOCUMENT
+>>>>>>> 9676977375cd512737dfb592b6888ebaf339100e
 --              values of the result set directly in the SQL client.
 --
 --           6. (Optional) Locate tasks or jobs corresponding to NODE_ID
@@ -217,7 +221,6 @@ UNION ALL SELECT
                         ON tx.mskey=e.mcmskey
                         LEFT OUTER JOIN idmv_entry_simple te
                         ON tx.targetmskey=te.mcmskey
-                        
                         WHERE tx.taskid=t.taskid)
                     AS "TASK_ACCESS_T")))
         ,version '1.0')

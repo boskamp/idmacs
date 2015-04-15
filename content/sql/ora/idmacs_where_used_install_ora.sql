@@ -64,7 +64,7 @@
 --  DDL for Type z_idmacs_clob_obj
 --------------------------------------------------------
 CREATE OR REPLACE
-    TYPE Z_IDMACS_CLOB_OBJ
+    TYPE z_idmacs_clob_obj
     AUTHID CURRENT_USER
     AS OBJECT (
   
@@ -390,7 +390,7 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
             raise_application_error(
                 -20010
                 ,'Z_IDMACS_WHERE_USED: Not a valid table name: '
-        ||iv_tab_name
+		||iv_tab_name
             );
         END IF;
 
@@ -404,7 +404,7 @@ CREATE OR REPLACE PACKAGE BODY z_idmacs_where_used
             raise_application_error(
                 -20011
                 ,'Z_IDMACS_WHERE_USED: Not a valid column name: '
-        ||iv_col_name
+		||iv_col_name
             );
         END IF;
     END validate_table_column_name;

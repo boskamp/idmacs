@@ -537,12 +537,12 @@ END z_idmacs_where_used;
 /
 CREATE OR REPLACE SYNONYM
     -- Replace MXMC with your DB table prefix
-    mxmc728_admin.z_idmacs_where_used 
-    FOR mxmc728_oper.z_idmacs_where_used;
+    mxmc_admin.z_idmacs_where_used 
+    FOR mxmc_oper.z_idmacs_where_used;
 
 GRANT EXECUTE
     -- Replace MXMC with your DB table prefix
-    ON mxmc728_oper.z_idmacs_where_used 
-    TO mxmc728_admin;
+    ON mxmc_oper.z_idmacs_where_used 
+    TO mxmc_admin;
 /
 

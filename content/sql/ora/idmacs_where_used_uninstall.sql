@@ -27,11 +27,37 @@
 -- OF THE POSSIBILITY OF SUCH DAMAGE.
 --
 -- *******************************************************************
--- TODO:
--- * Documentation
+--
+-- Synopsis: UNINSTALL a where-used query for use with SAP(R) IDM.
+--
+--           This is one of three related files:
+--
+--           [1] idmacs_where_used_install_ora.sql
+--           [2] idmacs_where_used_ora.sql
+--           [3] idmacs_where_used_uinstall_ora.sql (THIS FILE)
+--
+--           ALL OF THESE FILES ARE SPECIFIC TO ORACLE(R) DATABASE.
+--
+--           The most recent versions of these files, as well as
+--           versions for other databases, can be found at GitHub:
+--
+--           https://github.com/boskamp/idmacs
+--   
+-- Usage:    1. If SAP(R) IDM has been installed with a database prefix
+--              other than the default "MXMC", replace all occurrences
+--              of "MXMC" in this script with your actual DB prefix.
+--
+--           2. Use any SQL client, such as Oracle(R) SQL Developer,
+--              to connect to the SAP(R) IDM database and execute this
+--              script as OPER user (MXMC_OPER, by default).
+--
+-- Result:   All schema objects created by the installer [1] 
+--           have been removed from the SAP(R) IDM database.
+--
 -- *******************************************************************
 DROP PACKAGE z_idmacs_where_used;
 DROP TYPE z_idmacs_clob_tab;
 DROP TYPE z_idmacs_clob_obj;
--- Replace mxmc728 with your DB table prefix
-DROP SYNONYM mxmc728_admin.z_idmacs_where_used;
+
+-- Replace MXMC with your DB table prefix
+DROP SYNONYM mxmc_admin.z_idmacs_where_used;

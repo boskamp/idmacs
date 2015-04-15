@@ -31,36 +31,48 @@
 -- Synopsis: Find any string in SAP(R) Identity Management (IDM)
 --           JavaScript or SQL source code, job definitions or tasks.
 --
---           THIS IS THE VERSION FOR ORACLE(R) DATABASE.
+--           This is one of three related files:
 --
---           The most recent version of this file as well as
---           versions for other databases can be found at GitHub:
+--           [1] idmacs_where_used_install_ora.sql
+--           [2] idmacs_where_used_ora.sql          (THIS FILE)
+--           [3] idmacs_where_used_uinstall_ora.sql
+--
+--           ALL OF THESE FILES ARE SPECIFIC TO ORACLE(R) DATABASE.
+--
+--           The most recent versions of these files, as well as
+--           versions for other databases, can be found at GitHub:
 --
 --           https://github.com/boskamp/idmacs
---   
--- Usage:    1. Paste this source code into the SQL editor of any
+--
+-- Usage:    1. Before you can use this query, YOU MUST RUN THE
+--              INSTALLER [1] once.
+--
+--           2. Paste this source code into the SQL editor of any
 --              graphical SQL client that can display CLOB and/or
 --              XML data. Microsoft(R) SQL Server Management Studio,
 --              Oracle(R) SQL Developer and IBM(R) Data Studio are
 --              known to work fine. Others may work as well.
 --
---           2. In the SQL editor, replace YOUR_SEARCH_TERM_HERE
+--           3. In the SQL editor, replace YOUR_SEARCH_TERM_HERE
 --              near the end of the code with the string you want
 --              to search for. See also section "Example".
 --
---           3. Execute the resulting query as ADMIN user (MXMC_ADMIN).
+--           4. Execute the resulting query as ADMIN user (MXMC_ADMIN).
 --
---           4. (Optional) Examine MATCH_LOCATION_* and MATCH_DOCUMENT
+--           5. (Optional) Examine MATCH_LOCATION_* and MATCH_DOCUMENT
 --              values of the result set directly in the SQL client.
 --
---           5. (Optional) Locate tasks or jobs corresponding to NODE_ID
+--           6. (Optional) Locate tasks or jobs corresponding to NODE_ID
 --              values from your result set using MMC's Find action.
 --              Make sure to check "Find Tasks or Jobs only"!
 --
 -- Example:  To search for all occurences of the string MX_DISABLED,
 --           the code near the end should look like:
 --
---           where contains(upper-case($t),upper-case("MX_DISABLED"))
+--           WHERE z_idmacs_where_used.clob_contains(
+--               match_location_text
+--               , 'MX_DISABLED'
+--           ) > 0
 --
 --           Search is CASE-INSENSITIVE and uses SUBSTRING MATCHING,
 --           so this query would find any of the following strings,
@@ -74,11 +86,10 @@
 --           search term. Its rows have the following structure:
 --
 --           1. NODE_TYPE           : char(1)
---           2. NODE_ID             : int
---           3. NODE_NAME           : varchar(max)
---           4. MATCH_LOCATION_XML  : xml                 (MSSQL only)
---           5. MATCH_LOCATION_TEXT : varchar(max)
---           6. MATCH_DOCUMENT      : xml
+--           2. NODE_ID             : number(10,0)
+--           3. NODE_NAME           : varchar2(2000 char)
+--           4. MATCH_LOCATION_TEXT : clob
+--           5. MATCH_DOCUMENT      : xmltype
 --
 --           NODE_TYPE = [ 'A' -- Attribute (Identity Store attribute)
 --                       | 'T' -- Task

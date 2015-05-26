@@ -259,12 +259,10 @@ select
      node_id
      ,node_type
      ,node_name
-     ,cast(
-         cast(N'' AS XML).value(
-             'xs:base64Binary(sql:column("B64_ENC"))'
-             ,'VARBINARY(MAX)'
-         )
-     as varchar(max))
+     ,cast(N'' AS XML).value(
+         'xs:base64Binary(sql:column("B64_ENC"))'
+         ,'VARBINARY(MAX)'
+     )
      ,is_xml
      from b64_enc_cte
 )

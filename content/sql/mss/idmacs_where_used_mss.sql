@@ -266,6 +266,32 @@ select
      ,is_xml
      from b64_enc_cte
 )
+,xml_utf8_hex_cte(name,value) as (
+select
+    'PROLOG'
+    -- This is the hexadecimal byte values
+    -- of the following UTF-8 encoded text:
+    -- <?xml version="1.0" encoding="utf-8"?><ROOT><![CDATA[
+    ,'3C3F786D6C2076657273696F6E3D22312E302220
+      656E636F64696E673D227574662D38223F3E3C52
+      4F4F543E3C215B43444154415B'
+
+union all select
+    'EPILOG'
+    -- This is the hexadecimal byte values 
+    -- of the following UTF-8 encoded text:
+    -- ]]></ROOT>
+    ,'5D5D3E3C2F524F4F543E'
+)
+,xml_utf8_bin_cte(name,value) as (
+select
+    name
+    ,cast(N'' as XML).value(
+        'xs:hexBinary(sql:column("VALUE"))'
+        , 'VARBINARY(MAX)'
+     )
+    from xml_utf8_hex_cte
+)
 ,b64_datasource_cte(node_id,node_type,node_name,native_xml) as (
 select
      node_id
@@ -273,14 +299,23 @@ select
      ,node_name
      ,case is_xml
          --If B64_DEC is not well-formed XML by itself,
-         --create an XML fragment with a single ROOT node.
-         --Include the content of B64_DEC column as a text
-         --node underneath ROOT.
-         when 0 then (select
-             b64_dec as [text()] 
-             for xml path('')
-             ,root('ROOT')
-             ,type)
+         --decorate it with UTF-8 encoded XML prolog and epilog.
+         --Casting UTF-8 binary to VARCHAR or NVARCHAR won't work.
+         --See https://support.microsoft.com/en-us/kb/232580
+         when 0 then cast(
+             (select
+                 value
+                 from xml_utf8_bin_cte
+                 where name='PROLOG')
+
+             + b64_dec
+
+             + (select
+                 value
+                 from xml_utf8_bin_cte
+                 where name='EPILOG')
+
+         as xml)
          --If B64_DEC already is well-formed XML,
          --just cast it to T-SQL's native XML data type.
          else cast(b64_dec as xml)

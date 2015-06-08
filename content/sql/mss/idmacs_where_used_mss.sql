@@ -165,6 +165,7 @@ union all select
          t.taskid    as "TASKID"
          ,t.taskname as "TASKNAME"
          ,t.boolsql  as "BOOLSQL"
+         ,t.onsubmit as "ONSUBMIT"
          ,(select
              ta.attr_id    as "ATTR_ID"
              ,ta.attrname  as "ATTRNAME"

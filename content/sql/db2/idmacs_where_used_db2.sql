@@ -173,7 +173,8 @@ UNION ALL SELECT
                 xmlforest(
                     t.taskid
                     ,t.taskname
-                    ,t.boolsql)
+                    ,t.boolsql
+                    ,t.onsubmit)
                 ,xmlelement(
                     NAME "TASK_ATTRIBUTE_T"
                     ,(SELECT

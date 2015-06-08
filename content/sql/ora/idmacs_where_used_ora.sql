@@ -179,7 +179,8 @@ UNION ALL SELECT
                 xmlforest(
                     t.taskid
                     ,t.taskname
-                    ,t.boolsql)
+                    ,t.boolsql
+                    ,t.onsubmit)
                 ,xmlforest(
                     (SELECT
                         xmlagg(

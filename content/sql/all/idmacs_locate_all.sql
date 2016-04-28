@@ -204,7 +204,8 @@ WITH nodes
 
 ,tree
      -- ORA requires list of column aliases in CTE definition, MSS doesn't
-     (node_id,node_type,node_name,parent_node_id,parent_node_type,node_path)
+     (node_id,node_type,node_name,parent_node_id,parent_node_type,node_path
+      ,path_len)
      AS (
      SELECT node_id
             ,node_type
@@ -219,6 +220,7 @@ WITH nodes
                 + -- ORA/DB2: ||
                 node_name AS VARCHAR(4000)
             ) AS node_path
+            ,0 AS path_len
      FROM nodes
      WHERE parent_node_id IS NULL
 
@@ -239,11 +241,16 @@ WITH nodes
                 n.node_name
                 AS VARCHAR(4000)
             ) AS node_path
+            ,t.path_len+1 AS path_len
 -- DB2 CTEs require pre-ANSI JOIN syntax (equivalent to INNER JOIN)
      FROM nodes n
      , tree t
      WHERE t.node_id=n.parent_node_id
      AND t.node_type=n.parent_node_type
+-- Guard against infinite recursion in case of cyclic links.
+-- The below will query to a maximum depth of 99, which will
+-- work fine with MSSQL's default maxrecursion limit of 100. 
+     AND t.path_len<100
 )
 
 SELECT
@@ -251,11 +258,12 @@ SELECT
      ,node_type
      ,node_name
      ,node_path
+     ,path_len
      FROM tree
      WHERE 1=1
 -- Uncomment and adapt any or all of the below lines
      -- AND node_id   = 601
      -- AND node_type = 'T'
      -- AND node_name = 'Provisioning'
-     ORDER BY node_path
+     ORDER BY path_len,node_path
 ; 

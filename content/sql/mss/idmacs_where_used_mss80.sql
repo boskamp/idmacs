@@ -8,21 +8,21 @@
 -- 1. Redistributions of source code must retain the above copyright
 -- notice, this list of conditions and the following disclaimer.
 
--- 2. Redistributions in binary form must reproduce the above 
+-- 2. Redistributions in binary form must reproduce the above
 -- copyright notice, this list of conditions and the following
 -- disclaimer in the documentation and/or other materials provided
 -- with the distribution.
 
 -- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
--- "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
--- LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
--- FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
--- COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+-- "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+-- LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+-- FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+-- COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
 -- INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 -- (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 -- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
 -- HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
--- STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+-- STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 -- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 -- OF THE POSSIBILITY OF SUCH DAMAGE.
 --
@@ -37,7 +37,7 @@
 --           versions for other databases can be found at GitHub:
 --
 --           https://github.com/boskamp/idmacs
---   
+--
 -- Usage:    1. Paste this source code into the SQL editor of any
 --              graphical SQL client that can display CLOB and/or
 --              XML data. Microsoft(R) SQL Server Management Studio,
@@ -53,7 +53,7 @@
 --           4. (Optional) Examine MATCH_LOCATION_* and MATCH_DOCUMENT
 --              values of the result set directly in the SQL client.
 --
---           5. (Optional) TODO: Describe how to locate tasks or jobs 
+--           5. (Optional) TODO: Describe how to locate tasks or jobs
 --              corresponding to NODE_ID values from result set in
 --              SAP(R) IDM Developer Studio.
 --
@@ -79,11 +79,11 @@
 --           4. MATCH_LOCATION_XML  : xml                 (MSSQL only)
 --           5. MATCH_LOCATION_TEXT : varchar(max)
 --           6. MATCH_DOCUMENT      : xml
+--           7. NODE_PATH           : varchar(max)
 --
 --           NODE_TYPE = [ 'A' -- Attribute (Identity Store attribute)
 --                       | 'T' -- Task
 --                       | 'S' -- Script (package script)
---                       | 'G' -- Script (global script)
 --                       | 'J' -- Job
 --                       ]
 --
@@ -115,6 +115,12 @@
 --           For MATCH_DOCUMENTs that contain your search term multiple
 --           times, the result set will generally contain multiple lines
 --           which differ only in their MATCH_LOCATION_* values.
+--
+--           NODE_PATH is a textual representation of where this match
+--           is located in SAP(R) IDM Developer Studio. It helps you to
+--           manually navigate through the Developer Studio's main tree.
+--           For matches in linked tasks or their corresonding provisioning
+--           jobs, all paths will be displayed, one per result set line.
 --
 -- Credits:  Martin Smith http://stackoverflow.com/users/73226/martin-smith
 --           Thanks for explaining how to display large text in SSMS
@@ -225,16 +231,9 @@ union all select
 ,b64_enc_prefix_cte(node_id, node_type, node_name, b64_enc_prefix,
 is_xml) as (
 select
-     scriptid
-     ,'G'--Global Script
-     ,scriptname
-     ,scriptdefinition
-     ,0
-  from mc_global_scripts with (nolock)
-union all select
       b.mcscriptid
       ,'S'--Package Script
-      ,a.mcqualifiedname + ':jscript.' + b.mcscriptname
+      ,b.mcscriptname
       ,b.mcscriptdefinition
       ,0
    from mc_package a with (nolock)
@@ -290,7 +289,7 @@ select
 
 union all select
     'EPILOG'
-    -- This is the hexadecimal byte values 
+    -- This is the hexadecimal byte values
     -- of the following UTF-8 encoded text:
     -- ]]></ROOT>
     ,'5D5D3E3C2F524F4F543E'
@@ -342,13 +341,206 @@ union all select
      *
      from text_datasource_cte
 )
+,node_cte as (
+-- Identity Stores
+     select is_id         as node_id
+           ,NULL          as parent_node_id
+           ,NULL          as parent_node_type
+           ,idstorename   as node_name
+           ,'I'           as node_type
+     from mxi_idstores with (nolock)
+
+-- Top Level Package Folders for Identity Store
+     union all
+     select group_id        as node_id
+           ,idstore         as parent_node_id
+           ,'I'             as parent_node_type
+           ,group_name      as node_name
+           ,'G'             as node_type
+     from mc_group with (nolock)
+     where provision_group=2 -- package folder
+     and parent_group is null
+     and mcpackageid  is null
+
+-- Packages Contained in a Folder
+     union all
+     select p.mcpackageid      as node_id
+            ,p.mcgroup         as parent_node_id
+            ,'G'               as parent_node_type
+            ,p.mcqualifiedname as node_name
+            ,'P'               as node_type
+     from mc_group g with (nolock)
+     inner join mc_package p with (nolock)
+     on p.mcgroup=g.group_id
+
+-- Tasks Contained in a Folder
+     union all
+     select t.taskid      as node_id
+            ,t.taskgroup  as parent_node_id
+            ,'G'          as parent_node_type
+            ,t.taskname   as node_name
+            ,'T'          as node_type
+     from mc_group g with (nolock)
+     inner join mxp_tasks t with (nolock)
+     on t.taskgroup=g.group_id
+
+-- Top Level Process, Form or Job Folder of Package
+     union all
+     select group_id      as node_id
+            ,mcpackageid  as parent_node_id
+            ,'P'          as parent_node_type
+            ,group_name   as node_name
+            ,'G'          as node_type
+     from mc_group with (nolock)
+     where NOT provision_group=2 -- package folder
+     and parent_group is null
+
+-- Package, Process, Form or Job Folders Below Other Folders (Child Folders)
+     union all
+     select group_id      as node_id
+            ,parent_group as parent_node_id
+            ,'G'          as parent_node_type
+            ,group_name   as node_name
+            ,'G'          as node_type
+     from mc_group with (nolock)
+     where parent_group IS NOT NULL
+
+  -- Tasks Contained in a Process (Task Group)
+     union all
+     select
+     l.tasklnk            as node_id
+     ,l.taskref           as parent_node_id
+     ,'T'                 as parent_node_type
+     ,CASE p.actiontype
+         WHEN -4 --Switch Task
+         THEN cast('[CASE '
+             +
+             l.childgroup
+             +
+             '] - '
+             +
+             c.taskname as varchar(max))
+
+         WHEN -3 --Conditional Task
+         THEN
+           CASE l.childgroup
+               WHEN '1'
+               THEN cast('[CASE TRUE] - '
+                   +
+                   c.taskname as varchar(max))
+               ELSE cast('[CASE FALSE] - '
+                   +
+                   c.taskname as varchar(max))
+           END
+
+         ELSE c.taskname
+      END                 as node_name
+     ,'T'                 as node_type
+     from mxp_tasklnk l with (nolock)
+     inner join mxp_tasks p with (nolock)
+     on l.taskref=p.taskid
+     inner join mxp_tasks c with (nolock)
+     on l.tasklnk=c.taskid
+
+-- Provisioning Jobs
+    union all
+    select j.jobid        as node_id
+    ,t.taskid             as parent_node_id
+    ,'T'                  as parent_node_type
+    ,j.NAME               as node_name
+    ,'J'                  as node_type
+    from mc_jobs j with (nolock)
+    inner join mxp_tasks t with (nolock)
+    on j.jobguid=t.jobguid
+    where j.provision=1
+
+-- Regular Jobs
+    union all
+    select j.jobid        as node_id
+    ,group_id             as parent_node_id
+    ,'G'                  as parent_node_type
+    ,j.NAME               as node_name
+    ,'J'                  as node_type
+    from mc_jobs j with (nolock)
+    where j.provision=0
+
+-- Package Scripts
+    union all
+    select mcscriptid     as node_id
+    ,mcpackageid          as parent_node_id
+    ,'P'                  as parent_node_type
+    ,mcscriptname         as node_name
+    ,'S'                  as node_type
+    from mc_package_scripts with (nolock)
+
+)--node_cte
+,graph_cte as (
+     select node_id
+            ,node_type
+            ,node_name
+            ,parent_node_id
+            ,parent_node_type
+            ,cast('/'
+                +
+                cast(node_id as varchar(max))
+                +
+                ':'
+                +
+                node_name as varchar(max)
+            ) as node_path
+            ,0 as path_len
+     from node_cte
+     where parent_node_id is null
+
+     union all
+     select n.node_id
+            ,n.node_type
+            ,n.node_name
+            ,n.parent_node_id
+            ,n.parent_node_type
+            ,cast(t.node_path
+                +
+                '/'
+                +
+                cast(n.node_id as varchar(max))
+                +
+                ':'
+                +
+                n.node_name
+                as varchar(max)
+            ) as node_path
+            ,t.path_len+1 as path_len
+     from node_cte n
+     inner join graph_cte t
+     on t.node_id=n.parent_node_id
+     and t.node_type=n.parent_node_type
+-- Guard against infinite recursion in case of cyclic links.
+-- The below will query to a maximum depth of 99, which will
+-- work fine with MSSQL's default maxrecursion limit of 100.
+     and t.path_len<100
+)
+,tree_cte as (
+select g1.*
+    from graph_cte g1
+    left outer join graph_cte g2
+    on g1.node_type=g2.node_type
+    and g1.node_id=g2.node_id
+    -- Path length shorter than g1...
+    and g2.path_len<g1.path_len
+    -- ...does not exist
+    where g2.node_id is null
+    -- => g1's node_path, which will be included in the result set,
+    -- is the shortest (in terms of path elements) available path
+    -- to the given node .
+)
 select
-     node_type
-     ,node_id
-     ,node_name
+     a.node_type
+     ,a.node_id
+     ,a.node_name
+     ,b.node_path
 
      --Column MATCH_LOCATION_XML is specific to the MSSQL version
-     --of this query. It's only required to provide hyperlink 
+     --of this query. It's only required to provide hyperlink
      --navigation and to preserve line breaks in SSMS.
      ,(select
          xml_sequence.value('.', 'VARCHAR(MAX)')
@@ -357,12 +549,34 @@ select
          ,type)
      as match_location_xml
 
-     --Must use value() method of XML data type to avoid entitization 
+     --Must use value() method of XML data type to avoid entitization
      --of XML characters, e.g. encoding of "<" to "&lt;".
      ,xml_sequence.value('.', 'VARCHAR(MAX)') as match_location_text
 
      ,xml_sequence.query('/') as match_document
-     from any_datasource_cte
+
+     from any_datasource_cte a
+
+     -- ================= BEGIN: LINKED TASKS HANDLING ===================
+     -- The default is to show ALL paths that lead to a linked task
+     -- containing a match, one per result set line.
+     --
+     -- If you prefer to see ONLY ONE result set line per match in any
+     -- linked task, you can join on TREE_CTE instead of GRAPH_CTE as
+     -- shown below. This will result in showing ONLY ONE path to any
+     -- matching linked task. The path shown will be the one with the
+     -- minimum number of path elements (the shortest, one could say).
+
+     -- COMMENT next line:
+     left outer join graph_cte b
+
+     -- UNCOMMENT next line:
+     -- left outer join tree_cte b
+     -- ================= END: LINKED TASKS HANDLING =====================
+
+     on a.node_type=b.node_type
+     and a.node_id=b.node_id
+
      cross apply
      native_xml.nodes('
          (: Release 2005 of MSSQL does not have fn:upper-case() yet.    :)
@@ -374,5 +588,6 @@ select
          return $t
 
      ') as t(xml_sequence)
-     order by node_type,node_id
+
+     order by a.node_type,a.node_id
 ;

@@ -92,7 +92,7 @@ WITH nodes
            ,idstorename   AS node_name
            ,'I'           AS node_type
      FROM mxi_idstores
-     
+
 -- Top Level Package Folders for Identity Store
      UNION ALL
      SELECT group_id        AS node_id
@@ -104,7 +104,7 @@ WITH nodes
      WHERE provision_group=2 -- package folder
      AND parent_group IS NULL
      AND mcpackageid  IS NULL
-     
+
 -- Packages Contained in a Folder
      UNION ALL
      SELECT p.mcpackageid      AS node_id
@@ -115,7 +115,7 @@ WITH nodes
      FROM mc_group g
      INNER JOIN mc_package p
      ON p.mcgroup=g.group_id
-     
+
 -- Tasks Contained in a Folder
      UNION ALL
      SELECT t.taskid      AS node_id
@@ -206,6 +206,16 @@ WITH nodes
     ,'J'                  AS node_type
     FROM mc_jobs j
     WHERE j.provision=0
+
+-- Package Scripts
+    UNION ALL
+    SELECT mcscriptid     AS node_id
+    ,mcpackageid          AS parent_node_id
+    ,'P'                  AS parent_node_type
+    ,mcscriptname         AS node_name
+    ,'S'                  AS node_type
+    FROM mc_package_scripts
+
 )--nodes
 
 ,tree
